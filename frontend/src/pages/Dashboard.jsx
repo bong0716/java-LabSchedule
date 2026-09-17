@@ -1,15 +1,31 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import {
   FolderKanban, CheckCircle2, Umbrella, AlarmClock,
-  ArrowRight, FileText, Download, ChevronRight, AlertCircle,
+  ArrowRight, FileText, Download, ChevronRight, AlertCircle, X,
 } from 'lucide-react'
 
 const metricCards = [
-  { label: '진행 중 프로젝트', value: '8',  sub: '이번 분기',     icon: FolderKanban, color: 'text-primary-600', bg: 'bg-primary-100', cardBg: 'bg-primary-50',  link: '/projects?status=진행중' },
-  { label: '완료된 프로젝트',  value: '24', sub: '누적',          icon: CheckCircle2, color: 'text-blue-600',    bg: 'bg-blue-100',    cardBg: 'bg-blue-50',     link: '/projects?status=완료' },
-  { label: '오늘 휴가 인원',   value: '3',  sub: '홍길동 외 2명', icon: Umbrella,     color: 'text-yellow-600',  bg: 'bg-yellow-100',  cardBg: 'bg-yellow-50',   link: '/staff?tab=vacation' },
-  { label: '마감 임박 일정',   value: '5',  sub: '이번 주 이내',  icon: AlarmClock,   color: 'text-red-600',     bg: 'bg-red-100',     cardBg: 'bg-red-50',      link: '/calendar?filter=project' },
+  { label: '진행 중 프로젝트', value: '8',  sub: '이번 분기',     icon: FolderKanban, color: 'text-primary-600', bg: 'bg-primary-100', cardBg: 'bg-primary-50',  modalType: 'inProgress' },
+  { label: '완료된 프로젝트',  value: '24', sub: '누적',          icon: CheckCircle2, color: 'text-blue-600',    bg: 'bg-blue-100',    cardBg: 'bg-blue-50',     modalType: 'completed' },
+  { label: '오늘 휴가 인원',   value: '3',  sub: '홍길동 외 2명', icon: Umbrella,     color: 'text-yellow-600',  bg: 'bg-yellow-100',  cardBg: 'bg-yellow-50',   modalType: 'vacation' },
+  { label: '마감 임박 일정',   value: '5',  sub: '이번 주 이내',  icon: AlarmClock,   color: 'text-red-600',     bg: 'bg-red-100',     cardBg: 'bg-red-50',      modalType: 'deadline' },
+]
+
+const allProjects = [
+  { id: 1, name: '스마트팜 IoT 플랫폼 구축',    status: '진행중',  pm: '홍길동', progress: 68,  endDate: '2026-12-31' },
+  { id: 2, name: '환경 모니터링 시스템 개발',    status: '진행중',  pm: '김철수', progress: 12,  endDate: '2027-02-28' },
+  { id: 3, name: '데이터 분석 자동화 모듈',      status: '마감임박', pm: '이영희', progress: 91,  endDate: '2026-09-30' },
+  { id: 4, name: '바이오센서 HW 개발',           status: '진행중',  pm: '박지민', progress: 54,  endDate: '2026-11-30' },
+  { id: 5, name: '연구소 내부망 보안 강화',      status: '대기중',  pm: '최민준', progress: 0,   endDate: '2026-11-30' },
+  { id: 6, name: '2025년도 스마트농업 시스템',   status: '완료',    pm: '홍길동', progress: 100, endDate: '2025-12-31' },
+]
+
+const todayVacations = [
+  { name: '홍길동', type: '연차',  period: '2026-09-16',              status: '승인' },
+  { name: '김민서', type: '반차',  period: '2026-09-17',              status: '승인' },
+  { name: '이영희', type: '연차',  period: '2026-09-25 ~ 2026-09-26', status: '대기' },
 ]
 
 const upcomingSchedules = [
@@ -60,6 +76,7 @@ const typeLabels = { deadline: '마감', meeting: '미팅', review: '검수' }
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [activeModal, setActiveModal] = useState(null)
 
   return (
     <Layout title="대시보드" subtitle="연구소 현황 요약">
@@ -70,7 +87,7 @@ export default function Dashboard() {
           return (
             <div
               key={card.label}
-              onClick={() => navigate(card.link)}
+              onClick={() => setActiveModal(card.modalType)}
               className={`card p-5 cursor-pointer hover:shadow-md transition-all group ${card.cardBg}`}
             >
               <div className="flex items-start justify-between">
@@ -282,6 +299,150 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      {/* Metric Detail Modal */}
+      {activeModal && (
+        <MetricModal
+          type={activeModal}
+          onClose={() => setActiveModal(null)}
+          onNavigate={(path) => { setActiveModal(null); navigate(path) }}
+        />
+      )}
     </Layout>
+  )
+}
+
+const statusConfig = {
+  '진행중':  { cls: 'badge-green',  dot: 'bg-primary-500' },
+  '마감임박': { cls: 'badge-red',   dot: 'bg-red-500' },
+  '대기중':  { cls: 'badge-yellow', dot: 'bg-yellow-500' },
+  '완료':    { cls: 'badge-gray',   dot: 'bg-gray-400' },
+}
+
+function MetricModal({ type, onClose, onNavigate }) {
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+  const modalMeta = {
+    inProgress: { title: '진행 중 프로젝트', link: '/projects' },
+    completed:  { title: '완료된 프로젝트',  link: '/projects' },
+    vacation:   { title: '휴가 인원 현황',   link: '/staff' },
+    deadline:   { title: '마감 임박 일정',   link: '/calendar' },
+  }
+  const { title, link } = modalMeta[type]
+
+  const inProgressList  = allProjects.filter(p => p.status === '진행중' || p.status === '마감임박')
+  const completedList   = allProjects.filter(p => p.status === '완료')
+  const deadlineList    = [
+    { date: '09-17', day: '수', title: '스마트팜 IoT 중간보고',  project: '스마트팜 IoT 플랫폼', urgent: true },
+    { date: '09-19', day: '금', title: '데이터 분석 모듈 납품',  project: '데이터 분석 자동화',  urgent: true },
+    { date: '09-22', day: '월', title: '바이오 센서 1차 검수',   project: '바이오센서 개발',     urgent: false },
+    { date: '09-25', day: '목', title: '스마트팜 3분기 납품',    project: '스마트팜 IoT 플랫폼', urgent: false },
+    { date: '09-30', day: '화', title: '3분기 결산 보고',        project: '내부 일정',           urgent: false },
+  ]
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 pb-[20vh]"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl border border-gray-100 overflow-hidden">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigate(link)}
+              className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 transition-colors"
+            >
+              전체 보기 <ArrowRight style={{ width: 12, height: 12 }} />
+            </button>
+            <button
+              onClick={onClose}
+              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+            >
+              <X style={{ width: 15, height: 15 }} />
+            </button>
+          </div>
+        </div>
+
+        {/* 목록 */}
+        <div className="max-h-[520px] overflow-y-auto divide-y divide-gray-50">
+          {(type === 'inProgress') && inProgressList.map(p => {
+            const sc = statusConfig[p.status]
+            return (
+              <div
+                key={p.id}
+                onClick={() => onNavigate(`/projects/${p.id}`)}
+                className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 cursor-pointer group transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 group-hover:text-primary-600 transition-colors truncate">{p.name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">PM: {p.pm} · {p.endDate} 마감</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-xs font-medium text-primary-600">{p.progress}%</span>
+                  <span className={sc.cls}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${sc.dot} mr-1`} />
+                    {p.status}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+
+          {(type === 'completed') && completedList.map(p => (
+            <div
+              key={p.id}
+              onClick={() => onNavigate(`/projects/${p.id}`)}
+              className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 cursor-pointer group transition-colors"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 group-hover:text-primary-600 transition-colors truncate">{p.name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">PM: {p.pm} · {p.endDate} 완료</p>
+              </div>
+              <span className="badge-gray flex-shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1" />
+                완료
+              </span>
+            </div>
+          ))}
+
+          {(type === 'vacation') && todayVacations.map((v, i) => (
+            <div key={i} className="flex items-center gap-3 px-5 py-3.5">
+              <div className="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center text-xs font-semibold text-yellow-700 flex-shrink-0">
+                {v.name[0]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800">{v.name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{v.type} · {v.period}</p>
+              </div>
+              <span className={v.status === '승인' ? 'badge-green' : 'badge-yellow'}>
+                {v.status}
+              </span>
+            </div>
+          ))}
+
+          {(type === 'deadline') && deadlineList.map((s, i) => (
+            <div key={i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 cursor-pointer group transition-colors" onClick={() => onNavigate('/calendar')}>
+              <div className="w-10 flex-shrink-0 text-center">
+                <p className="text-xs text-gray-400 leading-none">{s.date.split('-')[0]}월</p>
+                <p className="text-base font-semibold text-gray-900 leading-tight">{s.date.split('-')[1]}</p>
+                <p className="text-xs text-gray-400 leading-none">{s.day}</p>
+              </div>
+              <div className="w-px h-8 bg-gray-100 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-gray-800 group-hover:text-primary-600 transition-colors truncate">{s.title}</p>
+                  {s.urgent && <span className="text-xs font-medium bg-red-50 text-red-600 px-1.5 py-0.5 rounded flex-shrink-0">긴급</span>}
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5 truncate">{s.project}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
