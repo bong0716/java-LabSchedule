@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:/IntelliJ/LabSchedule\" && npm create vite@latest frontend -- --template react 2>&1)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm install 2>&1 | tail -5)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm install -D tailwindcss postcss autoprefixer && npm install react-router-dom lucide-react 2>&1 | tail -5)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npx tailwindcss init -p 2>&1)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && ./node_modules/.bin/tailwindcss init -p 2>&1 || node_modules/.bin/tailwindcss.cmd init -p 2>&1)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm install -D tailwindcss@3 postcss autoprefixer 2>&1 | tail -5)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm install -D vite@5 @vitejs/plugin-react@4 2>&1 | tail -8)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm run build 2>&1)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm run build 2>&1 | tail -10)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm run build 2>&1 | tail -12)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm run build 2>&1 | tail -8)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm run build 2>&1 | tail -6)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm run build 2>&1 | tail -25)",
+      "Bash(cd \"C:/IntelliJ/LabSchedule/frontend\" && npm run build 2>&1 | tail -20)"
+    ]
+  }
+}
