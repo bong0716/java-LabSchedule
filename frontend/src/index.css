@@ -15,7 +15,7 @@
 
   body {
     margin: 0;
-    background-color: #f9fafb;
+    background-color: #fffcf8;
     color: #111827;
   }
 
@@ -35,7 +35,8 @@
   }
 
   .card {
-    @apply bg-white rounded-xl border border-gray-100 shadow-sm;
+    @apply bg-white rounded-xl shadow-sm;
+    border: 1px solid #ece7df;
   }
 
   .badge-green {

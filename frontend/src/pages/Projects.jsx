@@ -102,7 +102,7 @@ export default function Projects() {
   })
 
   return (
-    <Layout title="프로젝트" subtitle="전체 프로젝트 현황">
+    <Layout title="프로젝트">
       {/* Top bar */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">

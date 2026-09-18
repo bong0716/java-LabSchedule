@@ -21,8 +21,8 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-600 rounded-2xl mb-4 shadow-lg shadow-primary-600/25">
             <FlaskConical className="w-6 h-6 text-white" strokeWidth={2} />
           </div>
-          <h1 className="text-xl font-semibold text-gray-900">LabFlow</h1>
-          <p className="text-sm text-gray-500 mt-1">연구소 프로젝트 관리 시스템</p>
+          <h1 className="text-xl font-semibold text-gray-900">KornecFlow</h1>
+          <p className="text-sm text-gray-500 mt-1">프로젝트 관리 시스템</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">

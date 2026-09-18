@@ -103,7 +103,7 @@ export default function Staff() {
   )
 
   return (
-    <Layout title="직원 관리" subtitle="연구소 인력 현황 및 휴가 관리">
+    <Layout title="직원 관리">
       {/* Top bar */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
