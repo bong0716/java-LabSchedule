@@ -79,7 +79,7 @@ export default function Dashboard() {
   const [activeModal, setActiveModal] = useState(null)
 
   return (
-    <Layout title="대시보드" subtitle="연구소 현황 요약">
+    <Layout title="대시보드">
       {/* Metric Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {metricCards.map((card) => {
