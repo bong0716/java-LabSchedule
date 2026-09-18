@@ -17,16 +17,31 @@ const TYPE_CONFIG = {
   event:    { label: '내부 일정', color: 'bg-blue-500',    dot: 'bg-blue-500' },
 }
 
-export default function CalendarEventModal({ onClose, onSubmit, defaultDate = '' }) {
-  const [form, setForm] = useState({
-    title:      '',
-    type:       'event',
-    startDate:  defaultDate,
-    endDate:    '',
-    allDay:     true,
-    project:    '',
-    targetStaff: '',
-    memo:       '',
+export default function CalendarEventModal({ onClose, onSubmit, onUpdate, defaultDate = '', editEvent = null }) {
+  const isEdit = !!editEvent
+  const [form, setForm] = useState(() => {
+    if (editEvent) {
+      return {
+        title:       editEvent.title || '',
+        type:        editEvent.type || 'event',
+        startDate:   editEvent.date || '',
+        endDate:     '',
+        allDay:      true,
+        project:     editEvent.project || '',
+        targetStaff: editEvent.staff || '',
+        memo:        editEvent.memo || '',
+      }
+    }
+    return {
+      title:      '',
+      type:       'event',
+      startDate:  defaultDate,
+      endDate:    '',
+      allDay:     true,
+      project:    '',
+      targetStaff: '',
+      memo:       '',
+    }
   })
   const [errors, setErrors] = useState({})
 
@@ -55,6 +70,22 @@ export default function CalendarEventModal({ onClose, onSubmit, defaultDate = ''
       project: 'bg-primary-100 text-primary-700 border-primary-200',
       vacation: 'bg-yellow-100 text-yellow-700 border-yellow-200',
       event:    'bg-blue-100 text-blue-700 border-blue-200',
+    }
+
+    if (isEdit) {
+      const updatedEvent = {
+        ...editEvent,
+        date:  form.startDate,
+        title: form.title.trim(),
+        type:  form.type,
+        color: colorMap[form.type],
+        memo:  form.memo.trim(),
+        project: form.project || undefined,
+        staff:   form.targetStaff || undefined,
+      }
+      onUpdate?.(updatedEvent)
+      onClose()
+      return
     }
 
     // 기간이 있으면 시작일~종료일 모두 등록
@@ -103,8 +134,8 @@ export default function CalendarEventModal({ onClose, onSubmit, defaultDate = ''
               <CalendarDays style={{ width: 15, height: 15 }} className="text-primary-600" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">일정 등록</h2>
-              <p className="text-xs text-gray-400 mt-0.5">새 일정을 캘린더에 추가하세요</p>
+              <h2 className="text-sm font-semibold text-gray-900">{isEdit ? '일정 수정' : '일정 등록'}</h2>
+              <p className="text-xs text-gray-400 mt-0.5">{isEdit ? '일정 정보를 수정하세요' : '새 일정을 캘린더에 추가하세요'}</p>
             </div>
           </div>
           <button
@@ -172,19 +203,23 @@ export default function CalendarEventModal({ onClose, onSubmit, defaultDate = ''
                   onChange={e => { set('startDate', e.target.value); setErrors(p => ({ ...p, startDate: null })) }}
                   className={`flex-1 ${inputCls(errors.startDate)}`}
                 />
-                <span className="text-xs text-gray-400 flex-shrink-0">~</span>
-                <input
-                  type="date"
-                  value={form.endDate}
-                  min={form.startDate || undefined}
-                  onChange={e => { set('endDate', e.target.value); setErrors(p => ({ ...p, endDate: null })) }}
-                  className={`flex-1 ${inputCls(errors.endDate)}`}
-                />
+                {!isEdit && (
+                  <>
+                    <span className="text-xs text-gray-400 flex-shrink-0">~</span>
+                    <input
+                      type="date"
+                      value={form.endDate}
+                      min={form.startDate || undefined}
+                      onChange={e => { set('endDate', e.target.value); setErrors(p => ({ ...p, endDate: null })) }}
+                      className={`flex-1 ${inputCls(errors.endDate)}`}
+                    />
+                  </>
+                )}
               </div>
               {(errors.startDate || errors.endDate) && (
                 <FieldError msg={errors.startDate || errors.endDate} />
               )}
-              <p className="mt-1 text-xs text-gray-400">종료일은 선택 사항입니다 (당일 일정이면 비워두세요)</p>
+              {!isEdit && <p className="mt-1 text-xs text-gray-400">종료일은 선택 사항입니다 (당일 일정이면 비워두세요)</p>}
             </div>
 
             {/* 관련 프로젝트 (project 유형일 때만) */}
@@ -246,7 +281,7 @@ export default function CalendarEventModal({ onClose, onSubmit, defaultDate = ''
             </button>
             <button type="submit" className="btn-primary flex items-center gap-1.5">
               <CalendarDays style={{ width: 14, height: 14 }} />
-              등록
+              {isEdit ? '수정' : '등록'}
             </button>
           </div>
         </form>

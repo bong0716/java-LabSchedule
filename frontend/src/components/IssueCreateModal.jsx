@@ -1,15 +1,13 @@
 import { useState } from 'react'
 import { X, AlertCircle } from 'lucide-react'
 
-const CATEGORIES = ['기술', 'HW', 'UI/UX', '일정', '기타']
-const STAFF      = ['홍길동', '김철수', '이영희', '박지민', '최민준', '김민서']
+const STAFF = ['홍길동', '김철수', '이영희', '박지민', '최민준', '김민서']
 
 export default function IssueCreateModal({ onClose, onSubmit, nextId }) {
   const today = new Date().toISOString().slice(0, 10)
 
   const [form, setForm] = useState({
     title:       '',
-    category:    '',
     assignee:    '',
     openedDate:  today,
     dueDate:     '',
@@ -22,7 +20,6 @@ export default function IssueCreateModal({ onClose, onSubmit, nextId }) {
   const validate = () => {
     const errs = {}
     if (!form.title.trim())       errs.title       = '제목을 입력해주세요.'
-    if (!form.category)           errs.category    = '분류를 선택해주세요.'
     if (!form.description.trim()) errs.description = '이슈 내용을 입력해주세요.'
     return errs
   }
@@ -35,7 +32,6 @@ export default function IssueCreateModal({ onClose, onSubmit, nextId }) {
     onSubmit?.({
       id:          nextId,
       title:       form.title.trim(),
-      category:    form.category,
       status:      '신규',
       assignee:    form.assignee || '—',
       reporter:    '김연구',
@@ -99,35 +95,17 @@ export default function IssueCreateModal({ onClose, onSubmit, nextId }) {
               {errors.title && <FieldError msg={errors.title} />}
             </div>
 
-            {/* 분류 + 담당자 */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                  분류 <span className="text-red-400">*</span>
-                </label>
-                <select
-                  value={form.category}
-                  onChange={e => { set('category', e.target.value); setErrors(p => ({ ...p, category: null })) }}
-                  className={`w-full px-3 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all text-gray-700 ${
-                    errors.category ? 'border-red-300 bg-red-50/30' : 'border-gray-200'
-                  }`}
-                >
-                  <option value="">분류 선택</option>
-                  {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                </select>
-                {errors.category && <FieldError msg={errors.category} />}
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">담당자</label>
-                <select
-                  value={form.assignee}
-                  onChange={e => set('assignee', e.target.value)}
-                  className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all text-gray-700"
-                >
-                  <option value="">담당자 선택</option>
-                  {STAFF.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
+            {/* 담당자 */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">담당자</label>
+              <select
+                value={form.assignee}
+                onChange={e => set('assignee', e.target.value)}
+                className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all text-gray-700"
+              >
+                <option value="">담당자 선택</option>
+                {STAFF.map(s => <option key={s}>{s}</option>)}
+              </select>
             </div>
 
             {/* 발생일 + 마감일 */}

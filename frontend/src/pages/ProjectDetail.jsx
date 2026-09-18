@@ -6,7 +6,7 @@ import ReportWriteModal from '../components/ReportWriteModal'
 import IssueCreateModal from '../components/IssueCreateModal'
 import MemberAddModal from '../components/MemberAddModal'
 import {
-  ChevronLeft, Upload, MessageSquarePlus, FileText, Download,
+  ChevronLeft, Upload, FileText, Download,
   ChevronDown, ChevronRight, User, Calendar, Clock, AlertCircle,
   GitBranch, Plus, CheckCircle2, Pause,
   BarChart3, ClipboardList, ChevronUp, Search,
@@ -71,7 +71,6 @@ const issuesData = [
   {
     id: 'ISS-001',
     title: '센서 데이터 동기화 지연 발생',
-    category: '기술',
     status: '처리중',
     assignee: '김철수',
     reporter: '김철수',
@@ -86,7 +85,6 @@ const issuesData = [
   {
     id: 'ISS-002',
     title: '온습도 센서 0값 이상 출력',
-    category: 'HW',
     status: '해결됨',
     assignee: '박지민',
     reporter: '홍길동',
@@ -102,7 +100,6 @@ const issuesData = [
   {
     id: 'ISS-003',
     title: '대시보드 모바일 레이아웃 깨짐',
-    category: 'UI/UX',
     status: '보류',
     assignee: '이영희',
     reporter: '이영희',
@@ -290,7 +287,6 @@ export default function ProjectDetail() {
   const [issueFilter,    setIssueFilter]    = useState('전체')
   const [reportFilter,   setReportFilter]   = useState('전체')
   const [selectedReport, setSelectedReport] = useState(reports[0])
-  const [issueText,      setIssueText]      = useState('')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [issueList,     setIssueList]     = useState(issuesData)
@@ -357,18 +353,14 @@ export default function ProjectDetail() {
 
   return (
     <Layout title={projectData.name} subtitle={`${projectData.code} · ${projectData.status}`}>
-      {/* Back + Upload button */}
-      <div className="flex items-start justify-between mb-5">
+      {/* Back */}
+      <div className="mb-5">
         <button
           onClick={() => navigate('/projects')}
           className="flex items-center gap-1 text-xs text-gray-500 hover:text-primary-600 transition-colors"
         >
           <ChevronLeft style={{ width: 14, height: 14 }} />
           프로젝트 목록
-        </button>
-        <button onClick={() => setShowUploadModal(true)} className="btn-primary flex items-center gap-1.5">
-          <Upload style={{ width: 14, height: 14 }} />
-          파일 업로드
         </button>
       </div>
 
@@ -443,8 +435,8 @@ export default function ProjectDetail() {
 
       {/* ── 탭: 개요 & 타임라인 ───────────────────────────────── */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2 card p-5">
+        <div>
+          <div className="card p-5">
             <h3 className="text-sm font-semibold text-gray-900 mb-4">이력 타임라인</h3>
             <div className="relative">
               <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-100" />
@@ -467,21 +459,6 @@ export default function ProjectDetail() {
                 })}
               </div>
             </div>
-          </div>
-
-          <div className="card p-5 h-fit">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">코멘트 등록</h3>
-            <textarea
-              value={issueText}
-              onChange={e => setIssueText(e.target.value)}
-              placeholder="진행 중 특이사항이나 코멘트를 입력하세요..."
-              rows={5}
-              className="w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 placeholder-gray-400"
-            />
-            <button className="btn-primary w-full mt-2 flex items-center justify-center gap-1.5">
-              <MessageSquarePlus style={{ width: 14, height: 14 }} />
-              등록
-            </button>
           </div>
         </div>
       )}
@@ -527,7 +504,6 @@ export default function ProjectDetail() {
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left text-xs font-medium text-gray-400 px-5 py-3 w-24">이슈번호</th>
                   <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">제목</th>
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3 w-20">분류</th>
                   <th className="text-left text-xs font-medium text-gray-400 px-4 py-3 w-20">상태</th>
                   <th className="text-left text-xs font-medium text-gray-400 px-4 py-3 w-20">담당자</th>
                   <th className="text-left text-xs font-medium text-gray-400 px-4 py-3 w-28">발생일</th>
@@ -548,9 +524,6 @@ export default function ProjectDetail() {
                         <p className="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors">
                           {issue.title}
                         </p>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span className="badge-gray">{issue.category}</span>
                       </td>
                       <td className="px-4 py-3.5">
                         <span className={issueStatusStyle[issue.status]}>{issue.status}</span>
@@ -958,7 +931,7 @@ export default function ProjectDetail() {
               </div>
               <button onClick={() => setShowUploadModal(true)} className="btn-primary flex items-center gap-1.5">
                 <Plus style={{ width: 14, height: 14 }} />
-                새 산출물 등록
+                산출물 등록
               </button>
             </div>
           </div>

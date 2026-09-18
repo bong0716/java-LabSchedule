@@ -2,28 +2,30 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import CalendarEventModal from '../components/CalendarEventModal'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2 } from 'lucide-react'
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
 
+let nextEventId = 18
+
 const initialEvents = [
-  { date: '2026-09-03', title: '스마트팜 킥오프',       type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-primary-100 text-primary-700 border-primary-200' },
-  { date: '2026-09-05', title: '홍길동 연차',           type: 'vacation', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-  { date: '2026-09-08', title: '월간 연구소 회의',      type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { date: '2026-09-10', title: '중간보고서 제출',        type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-primary-100 text-primary-700 border-primary-200' },
-  { date: '2026-09-12', title: '김철수 반차',           type: 'vacation', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-  { date: '2026-09-15', title: '바이오센서 검수',        type: 'project',  project: '바이오센서 HW 개발',           color: 'bg-primary-100 text-primary-700 border-primary-200' },
-  { date: '2026-09-17', title: '스마트팜 중간보고',      type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-red-100 text-red-700 border-red-200' },
-  { date: '2026-09-17', title: '이영희 반차',            type: 'vacation', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-  { date: '2026-09-17', title: '보안 점검 회의',         type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { date: '2026-09-17', title: '바이오센서 부품 입고',   type: 'project',  project: '바이오센서 HW 개발',           color: 'bg-primary-100 text-primary-700 border-primary-200' },
-  { date: '2026-09-18', title: '환경모니터링 킥오프',    type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { date: '2026-09-19', title: '데이터분석 납품',        type: 'project',  project: '데이터 분석 자동화 모듈',      color: 'bg-red-100 text-red-700 border-red-200' },
-  { date: '2026-09-22', title: '추석 연휴',             type: 'event',    color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { date: '2026-09-23', title: '추석 연휴',             type: 'event',    color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { date: '2026-09-24', title: '추석 (공휴일)',         type: 'event',    color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { date: '2026-09-25', title: '스마트팜 현장방문',      type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-primary-100 text-primary-700 border-primary-200' },
-  { date: '2026-09-30', title: '3분기 결산 보고',       type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { id: 1,  date: '2026-09-03', title: '스마트팜 킥오프',       type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-primary-100 text-primary-700 border-primary-200' },
+  { id: 2,  date: '2026-09-05', title: '홍길동 연차',           type: 'vacation', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+  { id: 3,  date: '2026-09-08', title: '월간 연구소 회의',      type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { id: 4,  date: '2026-09-10', title: '중간보고서 제출',        type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-primary-100 text-primary-700 border-primary-200' },
+  { id: 5,  date: '2026-09-12', title: '김철수 반차',           type: 'vacation', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+  { id: 6,  date: '2026-09-15', title: '바이오센서 검수',        type: 'project',  project: '바이오센서 HW 개발',           color: 'bg-primary-100 text-primary-700 border-primary-200' },
+  { id: 7,  date: '2026-09-17', title: '스마트팜 중간보고',      type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-red-100 text-red-700 border-red-200' },
+  { id: 8,  date: '2026-09-17', title: '이영희 반차',            type: 'vacation', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+  { id: 9,  date: '2026-09-17', title: '보안 점검 회의',         type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { id: 10, date: '2026-09-17', title: '바이오센서 부품 입고',   type: 'project',  project: '바이오센서 HW 개발',           color: 'bg-primary-100 text-primary-700 border-primary-200' },
+  { id: 11, date: '2026-09-18', title: '환경모니터링 킥오프',    type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { id: 12, date: '2026-09-19', title: '데이터분석 납품',        type: 'project',  project: '데이터 분석 자동화 모듈',      color: 'bg-red-100 text-red-700 border-red-200' },
+  { id: 13, date: '2026-09-22', title: '추석 연휴',             type: 'event',    color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  { id: 14, date: '2026-09-23', title: '추석 연휴',             type: 'event',    color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  { id: 15, date: '2026-09-24', title: '추석 (공휴일)',         type: 'event',    color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  { id: 16, date: '2026-09-25', title: '스마트팜 현장방문',      type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-primary-100 text-primary-700 border-primary-200' },
+  { id: 17, date: '2026-09-30', title: '3분기 결산 보고',       type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
 ]
 
 const filters = [
@@ -46,6 +48,7 @@ export default function Calendar() {
   const [events,       setEvents]       = useState(initialEvents)
   const [showModal,    setShowModal]    = useState(false)
   const [modalDate,    setModalDate]    = useState('')   // 날짜 클릭 시 미리 채울 값
+  const [editEvent,    setEditEvent]    = useState(null) // 수정 모드일 때 기존 이벤트
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
   const firstDay    = getFirstDayOfMonth(currentYear, currentMonth)
@@ -68,9 +71,25 @@ export default function Calendar() {
     return events.filter(e => e.date === dateStr && activeFilters.includes(e.type))
   }
 
-  const openModal = (date = '') => { setModalDate(date); setShowModal(true) }
+  const openModal = (date = '', event = null) => {
+    setModalDate(date)
+    setEditEvent(event)
+    setShowModal(true)
+  }
 
-  const handleAddEvents = (newEvents) => setEvents(prev => [...prev, ...newEvents])
+  const handleAddEvents = (newEvents) => {
+    const withIds = newEvents.map(e => ({ ...e, id: nextEventId++ }))
+    setEvents(prev => [...prev, ...withIds])
+  }
+
+  const handleUpdateEvent = (updatedEvent) => {
+    setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e))
+  }
+
+  const handleDeleteEvent = (eventId) => {
+    if (!window.confirm('일정을 삭제하시겠습니까?')) return
+    setEvents(prev => prev.filter(e => e.id !== eventId))
+  }
 
   const selectedDateStr = selectedDay
     ? `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`
@@ -244,9 +263,27 @@ export default function Calendar() {
             )}
 
             <div className="space-y-2">
-              {selectedEvents.map((e, i) => (
-                <div key={i} className={`p-2.5 rounded-lg border text-xs ${e.color}`}>
-                  <p className="font-medium">{e.title}</p>
+              {selectedEvents.map((e) => (
+                <div key={e.id} className={`p-2.5 rounded-lg border text-xs ${e.color} group/item`}>
+                  <div className="flex items-start justify-between gap-1">
+                    <p className="font-medium flex-1">{e.title}</p>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity flex-shrink-0">
+                      <button
+                        onClick={() => openModal('', e)}
+                        className="w-5 h-5 flex items-center justify-center rounded hover:bg-black/10 transition-colors"
+                        title="수정"
+                      >
+                        <Pencil style={{ width: 11, height: 11 }} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEvent(e.id)}
+                        className="w-5 h-5 flex items-center justify-center rounded hover:bg-black/10 transition-colors"
+                        title="삭제"
+                      >
+                        <Trash2 style={{ width: 11, height: 11 }} />
+                      </button>
+                    </div>
+                  </div>
                   {e.type === 'project' && e.project && (
                     <p className="mt-1 opacity-70 flex items-center gap-1">
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-current opacity-60" />
@@ -297,12 +334,14 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* 일정 등록 모달 */}
+      {/* 일정 등록/수정 모달 */}
       {showModal && (
         <CalendarEventModal
           defaultDate={modalDate}
-          onClose={() => setShowModal(false)}
+          editEvent={editEvent}
+          onClose={() => { setShowModal(false); setEditEvent(null) }}
           onSubmit={handleAddEvents}
+          onUpdate={handleUpdateEvent}
         />
       )}
     </Layout>

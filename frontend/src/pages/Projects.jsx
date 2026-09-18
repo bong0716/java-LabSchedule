@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import ProjectCreateModal from '../components/ProjectCreateModal'
-import { Search, Plus, ChevronRight } from 'lucide-react'
+import { Search, Plus, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react'
 
 const projects = [
   {
@@ -92,13 +92,32 @@ export default function Projects() {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') ?? '전체')
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [sortField, setSortField] = useState(null)       // 'name' | 'startDate' | null
+  const [sortDirection, setSortDirection] = useState('asc') // 'asc' | 'desc'
 
   const statuses = ['전체', '진행중', '마감임박', '대기중', '완료']
+
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
 
   const filtered = projects.filter(p => {
     const matchSearch = p.name.includes(search) || p.code.includes(search) || p.pm.includes(search)
     const matchStatus = filterStatus === '전체' || p.status === filterStatus
     return matchSearch && matchStatus
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (!sortField) return 0
+    const dir = sortDirection === 'asc' ? 1 : -1
+    if (sortField === 'name') return a.name.localeCompare(b.name) * dir
+    if (sortField === 'startDate') return a.startDate.localeCompare(b.startDate) * dir
+    return 0
   })
 
   return (
@@ -163,17 +182,39 @@ export default function Projects() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/50">
-              <th className="text-left text-xs font-medium text-gray-400 px-5 py-3">프로젝트</th>
+              <th className="text-left text-xs font-medium text-gray-400 px-5 py-3">
+                <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:text-gray-600 transition-colors">
+                  프로젝트
+                  {sortField === 'name' ? (
+                    sortDirection === 'asc'
+                      ? <ChevronUp style={{ width: 12, height: 12 }} />
+                      : <ChevronDown style={{ width: 12, height: 12 }} />
+                  ) : (
+                    <ChevronDown style={{ width: 12, height: 12 }} className="opacity-30" />
+                  )}
+                </button>
+              </th>
               <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">상태</th>
               <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">PM</th>
               <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">팀원</th>
-              <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">기간</th>
+              <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">
+                <button onClick={() => toggleSort('startDate')} className="flex items-center gap-1 hover:text-gray-600 transition-colors">
+                  기간
+                  {sortField === 'startDate' ? (
+                    sortDirection === 'asc'
+                      ? <ChevronUp style={{ width: 12, height: 12 }} />
+                      : <ChevronDown style={{ width: 12, height: 12 }} />
+                  ) : (
+                    <ChevronDown style={{ width: 12, height: 12 }} className="opacity-30" />
+                  )}
+                </button>
+              </th>
               <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">진행률</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((p) => {
+            {sorted.map((p) => {
               const sc = statusConfig[p.status]
               return (
                 <tr
@@ -235,7 +276,7 @@ export default function Projects() {
             })}
           </tbody>
         </table>
-        {filtered.length === 0 && (
+        {sorted.length === 0 && (
           <div className="py-16 text-center text-sm text-gray-400">검색 결과가 없습니다</div>
         )}
       </div>

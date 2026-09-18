@@ -82,7 +82,7 @@ export default function FileUploadModal({ onClose, onSubmit }) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">새 산출물 등록</h2>
+            <h2 className="text-sm font-semibold text-gray-900">산출물 등록</h2>
             <p className="text-xs text-gray-400 mt-0.5">파일을 업로드하고 버전 정보를 입력하세요</p>
           </div>
           <button
