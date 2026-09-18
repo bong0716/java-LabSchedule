@@ -7,19 +7,22 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 const initialEvents = [
-  { date: '2026-09-03', title: '스마트팜 킥오프',       type: 'project',  color: 'bg-primary-100 text-primary-700 border-primary-200' },
+  { date: '2026-09-03', title: '스마트팜 킥오프',       type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-primary-100 text-primary-700 border-primary-200' },
   { date: '2026-09-05', title: '홍길동 연차',           type: 'vacation', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
   { date: '2026-09-08', title: '월간 연구소 회의',      type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { date: '2026-09-10', title: '중간보고서 제출',        type: 'project',  color: 'bg-primary-100 text-primary-700 border-primary-200' },
+  { date: '2026-09-10', title: '중간보고서 제출',        type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-primary-100 text-primary-700 border-primary-200' },
   { date: '2026-09-12', title: '김철수 반차',           type: 'vacation', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-  { date: '2026-09-15', title: '바이오센서 검수',        type: 'project',  color: 'bg-primary-100 text-primary-700 border-primary-200' },
-  { date: '2026-09-17', title: '스마트팜 중간보고',      type: 'project',  color: 'bg-red-100 text-red-700 border-red-200' },
+  { date: '2026-09-15', title: '바이오센서 검수',        type: 'project',  project: '바이오센서 HW 개발',           color: 'bg-primary-100 text-primary-700 border-primary-200' },
+  { date: '2026-09-17', title: '스마트팜 중간보고',      type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-red-100 text-red-700 border-red-200' },
+  { date: '2026-09-17', title: '이영희 반차',            type: 'vacation', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+  { date: '2026-09-17', title: '보안 점검 회의',         type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { date: '2026-09-17', title: '바이오센서 부품 입고',   type: 'project',  project: '바이오센서 HW 개발',           color: 'bg-primary-100 text-primary-700 border-primary-200' },
   { date: '2026-09-18', title: '환경모니터링 킥오프',    type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { date: '2026-09-19', title: '데이터분석 납품',        type: 'project',  color: 'bg-red-100 text-red-700 border-red-200' },
+  { date: '2026-09-19', title: '데이터분석 납품',        type: 'project',  project: '데이터 분석 자동화 모듈',      color: 'bg-red-100 text-red-700 border-red-200' },
   { date: '2026-09-22', title: '추석 연휴',             type: 'event',    color: 'bg-purple-100 text-purple-700 border-purple-200' },
   { date: '2026-09-23', title: '추석 연휴',             type: 'event',    color: 'bg-purple-100 text-purple-700 border-purple-200' },
   { date: '2026-09-24', title: '추석 (공휴일)',         type: 'event',    color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { date: '2026-09-25', title: '스마트팜 현장방문',      type: 'project',  color: 'bg-primary-100 text-primary-700 border-primary-200' },
+  { date: '2026-09-25', title: '스마트팜 현장방문',      type: 'project',  project: '스마트팜 IoT 플랫폼 구축',    color: 'bg-primary-100 text-primary-700 border-primary-200' },
   { date: '2026-09-30', title: '3분기 결산 보고',       type: 'event',    color: 'bg-blue-100 text-blue-700 border-blue-200' },
 ]
 
@@ -78,8 +81,24 @@ export default function Calendar() {
   for (let i = 0; i < firstDay; i++) calendarCells.push(null)
   for (let d = 1; d <= daysInMonth; d++) calendarCells.push(d)
 
+  // 이번 주 요약 집계 (월~일 기준)
+  const today = new Date()
+  const dow = today.getDay()
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1))
+  weekStart.setHours(0, 0, 0, 0)
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekStart.getDate() + 6)
+  const fmt = (d) => d.toISOString().slice(0, 10)
+  const thisWeekEvents = events.filter(e => e.date >= fmt(weekStart) && e.date <= fmt(weekEnd))
+  const weekSummary = {
+    project:  thisWeekEvents.filter(e => e.type === 'project').length,
+    event:    thisWeekEvents.filter(e => e.type === 'event').length,
+    vacation: thisWeekEvents.filter(e => e.type === 'vacation').length,
+  }
+
   return (
-    <Layout title="통합 캘린더" subtitle="프로젝트 일정, 휴가, 내부 일정">
+    <Layout title="통합 캘린더">
       <div className="flex gap-4">
 
         {/* ── 메인 캘린더 ── */}
@@ -143,7 +162,7 @@ export default function Calendar() {
           {/* 날짜 그리드 */}
           <div className="grid grid-cols-7">
             {calendarCells.map((day, idx) => {
-              if (!day) return <div key={`blank-${idx}`} className="min-h-[88px] border-b border-r border-gray-50" />
+              if (!day) return <div key={`blank-${idx}`} className="min-h-[120px] border-b border-r border-gray-50" />
               const dayEvents = getEventsForDay(day)
               const isToday   = day === 16 && currentMonth === 8 && currentYear === 2026
               const isSelected = day === selectedDay
@@ -155,7 +174,7 @@ export default function Calendar() {
                 <div
                   key={day}
                   onClick={() => setSelectedDay(day === selectedDay ? null : day)}
-                  className={`min-h-[88px] border-b border-r border-gray-50 p-1.5 cursor-pointer transition-colors group hover:bg-gray-50/70 ${
+                  className={`min-h-[120px] border-b border-r border-gray-50 p-1.5 cursor-pointer transition-colors group hover:bg-gray-50/70 ${
                     isSelected ? 'bg-primary-50/50' : ''
                   }`}
                 >
@@ -176,13 +195,13 @@ export default function Calendar() {
                     </span>
                   </div>
                   <div className="space-y-0.5">
-                    {dayEvents.slice(0, 2).map((e, i) => (
+                    {dayEvents.slice(0, 3).map((e, i) => (
                       <div key={i} className={`text-xs px-1.5 py-0.5 rounded border truncate ${e.color}`}>
                         {e.title}
                       </div>
                     ))}
-                    {dayEvents.length > 2 && (
-                      <p className="text-xs text-gray-400 px-1">+{dayEvents.length - 2}개</p>
+                    {dayEvents.length > 3 && (
+                      <p className="text-xs text-gray-400 px-1">+{dayEvents.length - 3}개</p>
                     )}
                   </div>
                 </div>
@@ -228,6 +247,12 @@ export default function Calendar() {
               {selectedEvents.map((e, i) => (
                 <div key={i} className={`p-2.5 rounded-lg border text-xs ${e.color}`}>
                   <p className="font-medium">{e.title}</p>
+                  {e.type === 'project' && e.project && (
+                    <p className="mt-1 opacity-70 flex items-center gap-1">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+                      {e.project}
+                    </p>
+                  )}
                   {e.memo && <p className="mt-0.5 opacity-70">{e.memo}</p>}
                 </div>
               ))}
@@ -258,9 +283,9 @@ export default function Calendar() {
             <h3 className="text-xs font-semibold text-gray-900 mb-3">이번 주 요약</h3>
             <div className="space-y-2.5">
               {[
-                { label: '프로젝트 마감', value: '2건', color: 'text-red-600' },
-                { label: '미팅/행사',     value: '1건', color: 'text-blue-600' },
-                { label: '휴가 인원',     value: '1명', color: 'text-yellow-600' },
+                { label: '프로젝트 일정', value: `${weekSummary.project}건`,  color: 'text-primary-600' },
+                { label: '휴가 인원',     value: `${weekSummary.vacation}명`, color: 'text-yellow-600' },
+                { label: '내부 일정',     value: `${weekSummary.event}건`,    color: 'text-blue-600' },
               ].map(item => (
                 <div key={item.label} className="flex justify-between items-center">
                   <span className="text-xs text-gray-500">{item.label}</span>
