@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { X, Upload, FileText, FolderOpen, AlertCircle } from 'lucide-react'
 
-const CATEGORIES = ['보고서', '설계서', '계획서', 'HW도면', '소프트웨어', '회의록', '기타']
+const CATEGORIES = ['WBS', '보고서', '설계서', '계획서', 'HW도면', '소프트웨어', '회의록', '기타']
 
 const VERSION_PATTERN = /^(v\d+\.\d+(\.\d+)?|Rev\d+|R\d+)$/i
 

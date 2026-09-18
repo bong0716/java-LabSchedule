@@ -4,11 +4,12 @@ import Layout from '../components/Layout'
 import FileUploadModal from '../components/FileUploadModal'
 import ReportWriteModal from '../components/ReportWriteModal'
 import IssueCreateModal from '../components/IssueCreateModal'
+import MemberAddModal from '../components/MemberAddModal'
 import {
   ChevronLeft, Upload, MessageSquarePlus, FileText, Download,
   ChevronDown, ChevronRight, User, Calendar, Clock, AlertCircle,
-  GitBranch, Plus, CheckCircle2, Pause, ListTodo,
-  BarChart3, ClipboardList, ChevronUp,
+  GitBranch, Plus, CheckCircle2, Pause,
+  BarChart3, ClipboardList, ChevronUp, Search,
 } from 'lucide-react'
 
 // ─── 공통 데이터 ────────────────────────────────────────────────
@@ -21,11 +22,11 @@ const allProjects = [
   { id: 6, name: '2025년도 스마트농업 시스템',   code: 'SA-2025-12',  status: '완료',   pm: '홍길동', startDate: '2025-03-01', endDate: '2025-12-31', progress: 100, description: '스마트농업 환경 제어 및 생산성 향상을 위한 통합 관리 시스템 개발.' },
 ]
 
-const members = [
-  { name: '홍길동', role: 'PM',  team: '시스템팀',       mm: 5.0, joined: '2026-03-01' },
-  { name: '김철수', role: '팀원', team: '시스템팀',       mm: 3.0, joined: '2026-03-01' },
-  { name: '이영희', role: '팀원', team: '소프트웨어팀',    mm: 2.5, joined: '2026-04-01' },
-  { name: '박지민', role: '팀원', team: 'HW팀',           mm: 2.0, joined: '2026-03-01' },
+const initialMembers = [
+  { name: '홍길동', role: 'PM',  team: '시스템팀',     mm: 5.0, joined: '2026-03-01', isFreelancer: false },
+  { name: '김철수', role: '팀원', team: '시스템팀',     mm: 3.0, joined: '2026-03-01', isFreelancer: false },
+  { name: '이영희', role: '팀원', team: '소프트웨어팀', mm: 2.5, joined: '2026-04-01', isFreelancer: false },
+  { name: '박지민', role: '팀원', team: 'HW팀',         mm: 2.0, joined: '2026-03-01', isFreelancer: false },
 ]
 
 // ─── 타임라인 데이터 ────────────────────────────────────────────
@@ -294,8 +295,12 @@ export default function ProjectDetail() {
   const [showReportModal, setShowReportModal] = useState(false)
   const [issueList,     setIssueList]     = useState(issuesData)
   const [reportList,    setReportList]    = useState(reports)
-  const [showIssueModal, setShowIssueModal] = useState(false)
-  const [responseInputs, setResponseInputs] = useState({})
+  const [showIssueModal,  setShowIssueModal]  = useState(false)
+  const [responseInputs,  setResponseInputs]  = useState({})
+  const [memberList,      setMemberList]      = useState(initialMembers)
+  const [showMemberModal, setShowMemberModal] = useState(false)
+  const [fileSearch,     setFileSearch]     = useState('')
+  const [fileCategoryFilter, setFileCategoryFilter] = useState('전체')
   // responseInputs: { [issueId]: { action, status, content } }
 
   const toggleFile  = (fid) => setExpandedFiles(prev => ({ ...prev, [fid]: !prev[fid] }))
@@ -337,9 +342,8 @@ export default function ProjectDetail() {
   const tabs = [
     { key: 'overview', label: '개요 & 타임라인',   icon: GitBranch },
     { key: 'issues',   label: '이슈 관리',          icon: AlertCircle },
-    { key: 'wbs',      label: 'WBS',               icon: ListTodo },
-    { key: 'reports',  label: '주간 / 월간 보고',   icon: ClipboardList },
-    { key: 'files',    label: '산출물 저장소',       icon: FileText },
+{ key: 'reports',  label: '주간 / 월간 보고',   icon: ClipboardList },
+    { key: 'files',    label: '산출물',       icon: FileText },
     { key: 'members',  label: '참여 인력',           icon: User },
   ]
 
@@ -404,7 +408,7 @@ export default function ProjectDetail() {
           <div className="flex items-center gap-1.5 text-sm text-gray-600">
             <User style={{ width: 14, height: 14 }} className="text-gray-400" />
             <span className="text-gray-400 text-xs">참여인원</span>
-            <span>{members.length}명</span>
+            <span>{memberList.length}명</span>
           </div>
           <div className="flex items-center gap-1.5 text-sm text-gray-600">
             <AlertCircle style={{ width: 14, height: 14 }} className="text-gray-400" />
@@ -514,29 +518,6 @@ export default function ProjectDetail() {
               <Plus style={{ width: 14, height: 14 }} />
               이슈 등록
             </button>
-          </div>
-
-          {/* 요약 카드 */}
-          <div className="grid grid-cols-4 gap-3 mb-4">
-            {[
-              { label: '전체',   count: issueList.length,                               color: 'text-gray-700',    bg: 'bg-gray-200',    cardBg: 'bg-gray-50',     icon: AlertCircle },
-              { label: '처리중', count: issueList.filter(i=>i.status==='처리중').length, color: 'text-yellow-700',  bg: 'bg-yellow-100',  cardBg: 'bg-yellow-50',   icon: Clock },
-              { label: '해결됨', count: issueList.filter(i=>i.status==='해결됨').length, color: 'text-primary-700', bg: 'bg-primary-100', cardBg: 'bg-primary-50',  icon: CheckCircle2 },
-              { label: '보류',   count: issueList.filter(i=>i.status==='보류').length,   color: 'text-slate-500',   bg: 'bg-slate-200',   cardBg: 'bg-slate-100',   icon: Pause },
-            ].map(s => {
-              const Icon = s.icon
-              return (
-                <div key={s.label} className={`card px-4 py-3 flex items-center gap-3 ${s.cardBg}`}>
-                  <div className={`w-8 h-8 ${s.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                    <Icon style={{ width: 15, height: 15 }} className={s.color} />
-                  </div>
-                  <div>
-                    <p className={`text-xl font-semibold ${s.color}`}>{s.count}</p>
-                    <p className="text-xs text-gray-400">{s.label}</p>
-                  </div>
-                </div>
-              )
-            })}
           </div>
 
           {/* 이슈 목록 */}
@@ -940,15 +921,46 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      {/* ── 탭: 산출물 저장소 ────────────────────────────────── */}
+      {/* ── 탭: 산출물 ────────────────────────────────── */}
       {activeTab === 'files' && (
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-900">산출물 저장소</h3>
-            <button onClick={() => setShowUploadModal(true)} className="btn-primary flex items-center gap-1.5">
-              <Plus style={{ width: 14, height: 14 }} />
-              새 산출물 등록
-            </button>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-gray-900">산출물</h3>
+              {/* 카테고리 필터 */}
+              <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+                {['전체', 'WBS', '보고서', '설계서', '계획서', 'HW도면', '소프트웨어', '회의록', '기타'].map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setFileCategoryFilter(c)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      fileCategoryFilter === c
+                        ? 'bg-primary-600 text-white shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* 검색 */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" style={{ width: 13, height: 13 }} />
+                <input
+                  type="text"
+                  value={fileSearch}
+                  onChange={e => setFileSearch(e.target.value)}
+                  placeholder="파일명, 등록자 검색"
+                  className="pl-7 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg w-44 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all placeholder-gray-400"
+                />
+              </div>
+              <button onClick={() => setShowUploadModal(true)} className="btn-primary flex items-center gap-1.5">
+                <Plus style={{ width: 14, height: 14 }} />
+                새 산출물 등록
+              </button>
+            </div>
           </div>
           <table className="w-full">
             <thead>
@@ -962,7 +974,11 @@ export default function ProjectDetail() {
               </tr>
             </thead>
             <tbody>
-              {files.map((f) => (
+              {files.filter(f => {
+                const matchSearch = f.name.includes(fileSearch) || f.uploader.includes(fileSearch)
+                const matchCategory = fileCategoryFilter === '전체' || f.category === fileCategoryFilter
+                return matchSearch && matchCategory
+              }).map((f) => (
                 <>
                   <tr
                     key={f.id}
@@ -1027,7 +1043,7 @@ export default function ProjectDetail() {
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h3 className="text-sm font-semibold text-gray-900">참여 인력 현황</h3>
-            <button className="btn-secondary flex items-center gap-1.5">
+            <button onClick={() => setShowMemberModal(true)} className="btn-primary flex items-center gap-1.5">
               <Plus style={{ width: 14, height: 14 }} />
               인력 추가
             </button>
@@ -1043,24 +1059,34 @@ export default function ProjectDetail() {
               </tr>
             </thead>
             <tbody>
-              {members.map((m) => (
+              {memberList.map((m) => (
                 <tr key={m.name} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-sm font-medium text-primary-700">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 ${
+                        m.isFreelancer ? 'bg-orange-100 text-orange-700' : 'bg-primary-100 text-primary-700'
+                      }`}>
                         {m.name[0]}
                       </div>
-                      <span className="text-sm font-medium text-gray-900">{m.name}</span>
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">{m.name}</span>
+                        {m.isFreelancer && (
+                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-50 text-orange-600">프리랜서</span>
+                        )}
+                        {m.contact && (
+                          <p className="text-xs text-gray-400 mt-0.5">{m.contact}</p>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <span className={m.role === 'PM' ? 'badge-green' : 'badge-gray'}>{m.role}</span>
+                    <span className={m.role === 'PM' ? 'badge-green' : m.role === '자문' ? 'badge-blue' : 'badge-gray'}>{m.role}</span>
                   </td>
                   <td className="px-4 py-4 text-sm text-gray-600">{m.team}</td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-primary-400 rounded-full" style={{ width: `${(m.mm / 5) * 100}%` }} />
+                        <div className="h-full bg-primary-400 rounded-full" style={{ width: `${Math.min((m.mm / 5) * 100, 100)}%` }} />
                       </div>
                       <span className="text-sm text-gray-700 font-medium">{m.mm}</span>
                     </div>
@@ -1070,13 +1096,28 @@ export default function ProjectDetail() {
               ))}
             </tbody>
           </table>
-          <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2">
-            <span className="text-xs text-gray-500">총 투입공수</span>
-            <span className="text-sm font-semibold text-gray-900">
-              {members.reduce((sum, m) => sum + m.mm, 0).toFixed(1)} M/M
+          <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+            <span className="text-xs text-gray-400">
+              사내 {memberList.filter(m => !m.isFreelancer).length}명
+              {memberList.some(m => m.isFreelancer) && ` · 프리랜서 ${memberList.filter(m => m.isFreelancer).length}명`}
             </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">총 투입공수</span>
+              <span className="text-sm font-semibold text-gray-900">
+                {memberList.reduce((sum, m) => sum + m.mm, 0).toFixed(1)} M/M
+              </span>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* ── 인력 추가 모달 ──────────────────────────────────── */}
+      {showMemberModal && (
+        <MemberAddModal
+          onClose={() => setShowMemberModal(false)}
+          existingNames={memberList.map(m => m.name)}
+          onSubmit={(member) => setMemberList(prev => [...prev, member])}
+        />
       )}
 
       {/* ── 산출물 등록 모달 ─────────────────────────────────── */}
