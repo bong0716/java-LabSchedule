@@ -1,31 +1,20 @@
 import { useState } from 'react'
 import { X, CalendarDays, AlertCircle } from 'lucide-react'
 
-const PROJECTS = [
-  '스마트팜 IoT 플랫폼 구축',
-  '환경 모니터링 시스템 개발',
-  '데이터 분석 자동화 모듈',
-  '바이오센서 HW 개발',
-  '연구소 내부망 보안 강화',
-]
-
-const STAFF = ['홍길동', '김철수', '이영희', '박지민', '최민준', '김민서']
-
 const TYPE_CONFIG = {
   project: { label: '프로젝트 일정', color: 'bg-primary-600', dot: 'bg-primary-500' },
-  vacation: { label: '휴가',         color: 'bg-yellow-500',   dot: 'bg-yellow-500' },
-  event:    { label: '내부 일정', color: 'bg-blue-500',    dot: 'bg-blue-500' },
+  event:   { label: '내부 일정',     color: 'bg-blue-500',    dot: 'bg-blue-500' },
 }
 
-export default function CalendarEventModal({ onClose, onSubmit, onUpdate, defaultDate = '', editEvent = null }) {
+export default function CalendarEventModal({ onClose, onSubmit, onUpdate, defaultDate = '', editEvent = null, projects = [], staffList = [] }) {
   const isEdit = !!editEvent
   const [form, setForm] = useState(() => {
     if (editEvent) {
       return {
         title:       editEvent.title || '',
         type:        editEvent.type || 'event',
-        startDate:   editEvent.date || '',
-        endDate:     '',
+        startDate:   editEvent.date || editEvent.startDate || '',
+        endDate:     editEvent.endDate || '',
         allDay:      true,
         project:     editEvent.project || '',
         targetStaff: editEvent.staff || '',
@@ -56,8 +45,6 @@ export default function CalendarEventModal({ onClose, onSubmit, onUpdate, defaul
                                errs.endDate   = '종료일은 시작일 이후여야 합니다.'
     if (form.type === 'project' && !form.project)
                                errs.project   = '관련 프로젝트를 선택해주세요.'
-    if (form.type === 'vacation' && !form.targetStaff)
-                               errs.targetStaff = '대상 직원을 선택해주세요.'
     return errs
   }
 
@@ -75,43 +62,32 @@ export default function CalendarEventModal({ onClose, onSubmit, onUpdate, defaul
     if (isEdit) {
       const updatedEvent = {
         ...editEvent,
-        date:  form.startDate,
-        title: form.title.trim(),
-        type:  form.type,
-        color: colorMap[form.type],
-        memo:  form.memo.trim(),
-        project: form.project || undefined,
-        staff:   form.targetStaff || undefined,
+        startDate: form.startDate,
+        endDate:   form.endDate || null,
+        title:     form.title.trim(),
+        type:      form.type,
+        color:     colorMap[form.type],
+        memo:      form.memo.trim(),
+        project:   form.project || undefined,
+        staff:     form.targetStaff || undefined,
       }
       onUpdate?.(updatedEvent)
       onClose()
       return
     }
 
-    // 기간이 있으면 시작일~종료일 모두 등록
-    const dates = []
-    if (form.endDate && form.endDate !== form.startDate) {
-      const cur = new Date(form.startDate)
-      const end = new Date(form.endDate)
-      while (cur <= end) {
-        dates.push(cur.toISOString().slice(0, 10))
-        cur.setDate(cur.getDate() + 1)
-      }
-    } else {
-      dates.push(form.startDate)
-    }
-
-    const newEvents = dates.map(date => ({
-      date,
-      title: form.title.trim(),
-      type:  form.type,
-      color: colorMap[form.type],
-      memo:  form.memo.trim(),
+    const newEvent = {
+      title:     form.title.trim(),
+      type:      form.type,
+      startDate: form.startDate,
+      endDate:   form.endDate || form.startDate,
+      color:     colorMap[form.type],
+      memo:      form.memo.trim(),
       ...(form.project     && { project: form.project }),
       ...(form.targetStaff && { staff:   form.targetStaff }),
-    }))
+    }
 
-    onSubmit?.(newEvents)
+    onSubmit?.(newEvent)
     onClose()
   }
 
@@ -203,23 +179,19 @@ export default function CalendarEventModal({ onClose, onSubmit, onUpdate, defaul
                   onChange={e => { set('startDate', e.target.value); setErrors(p => ({ ...p, startDate: null })) }}
                   className={`flex-1 ${inputCls(errors.startDate)}`}
                 />
-                {!isEdit && (
-                  <>
-                    <span className="text-xs text-gray-400 flex-shrink-0">~</span>
-                    <input
-                      type="date"
-                      value={form.endDate}
-                      min={form.startDate || undefined}
-                      onChange={e => { set('endDate', e.target.value); setErrors(p => ({ ...p, endDate: null })) }}
-                      className={`flex-1 ${inputCls(errors.endDate)}`}
-                    />
-                  </>
-                )}
+                <span className="text-xs text-gray-400 flex-shrink-0">~</span>
+                <input
+                  type="date"
+                  value={form.endDate}
+                  min={form.startDate || undefined}
+                  onChange={e => { set('endDate', e.target.value); setErrors(p => ({ ...p, endDate: null })) }}
+                  className={`flex-1 ${inputCls(errors.endDate)}`}
+                />
               </div>
               {(errors.startDate || errors.endDate) && (
                 <FieldError msg={errors.startDate || errors.endDate} />
               )}
-              {!isEdit && <p className="mt-1 text-xs text-gray-400">종료일은 선택 사항입니다 (당일 일정이면 비워두세요)</p>}
+              <p className="mt-1 text-xs text-gray-400">종료일은 선택 사항입니다 (당일 일정이면 비워두세요)</p>
             </div>
 
             {/* 관련 프로젝트 (project 유형일 때만) */}
@@ -234,29 +206,12 @@ export default function CalendarEventModal({ onClose, onSubmit, onUpdate, defaul
                   className={`w-full px-3 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all text-gray-700 ${errors.project ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
                 >
                   <option value="">프로젝트 선택</option>
-                  {PROJECTS.map(p => <option key={p}>{p}</option>)}
+                  {projects.map(p => <option key={p}>{p}</option>)}
                 </select>
                 {errors.project && <FieldError msg={errors.project} />}
               </div>
             )}
 
-            {/* 대상 직원 (vacation 유형일 때만) */}
-            {form.type === 'vacation' && (
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                  대상 직원 <span className="text-red-400">*</span>
-                </label>
-                <select
-                  value={form.targetStaff}
-                  onChange={e => { set('targetStaff', e.target.value); setErrors(p => ({ ...p, targetStaff: null })) }}
-                  className={`w-full px-3 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all text-gray-700 ${errors.targetStaff ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
-                >
-                  <option value="">직원 선택</option>
-                  {STAFF.map(s => <option key={s}>{s}</option>)}
-                </select>
-                {errors.targetStaff && <FieldError msg={errors.targetStaff} />}
-              </div>
-            )}
 
             {/* 메모 */}
             <div>

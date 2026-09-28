@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react'
 import { X, Upload, FileText, FolderOpen, AlertCircle } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const CATEGORIES = ['WBS', '보고서', '설계서', '계획서', 'HW도면', '소프트웨어', '회의록', '기타']
 
 const VERSION_PATTERN = /^(v\d+\.\d+(\.\d+)?|Rev\d+|R\d+)$/i
 
 export default function FileUploadModal({ onClose, onSubmit }) {
+  const { user } = useAuth()
   const fileInputRef = useRef(null)
   const [dragging, setDragging] = useState(false)
   const [file, setFile] = useState(null)
@@ -218,11 +220,11 @@ export default function FileUploadModal({ onClose, onSubmit }) {
             {/* ── 등록자 (자동) ── */}
             <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 rounded-lg border border-gray-100">
               <div className="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center text-xs font-semibold text-primary-700 flex-shrink-0">
-                김
+                {user?.staffName?.[0] || '?'}
               </div>
               <div className="flex-1">
                 <span className="text-xs text-gray-500">등록자</span>
-                <span className="text-xs font-medium text-gray-800 ml-2">김연구 (자동)</span>
+                <span className="text-xs font-medium text-gray-800 ml-2">{user?.staffName || '알 수 없음'} (자동)</span>
               </div>
               <span className="text-xs text-gray-400">{new Date().toISOString().slice(0, 10)}</span>
             </div>

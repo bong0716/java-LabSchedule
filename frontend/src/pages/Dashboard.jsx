@@ -1,89 +1,73 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
+import { getDashboard } from '../api/dashboard'
 import {
   FolderKanban, CheckCircle2, Umbrella, AlarmClock,
   ArrowRight, FileText, Download, ChevronRight, AlertCircle, X,
 } from 'lucide-react'
 
-const metricCards = [
-  { label: '진행 중 프로젝트', value: '8',  sub: '이번 분기',     icon: FolderKanban, color: 'text-primary-600', bg: 'bg-primary-100', cardBg: 'bg-primary-50',  modalType: 'inProgress' },
-  { label: '완료된 프로젝트',  value: '24', sub: '누적',          icon: CheckCircle2, color: 'text-blue-600',    bg: 'bg-blue-100',    cardBg: 'bg-blue-50',     modalType: 'completed' },
-  { label: '오늘 휴가 인원',   value: '3',  sub: '홍길동 외 2명', icon: Umbrella,     color: 'text-yellow-600',  bg: 'bg-yellow-100',  cardBg: 'bg-yellow-50',   modalType: 'vacation' },
-  { label: '마감 임박 일정',   value: '5',  sub: '이번 주 이내',  icon: AlarmClock,   color: 'text-red-600',     bg: 'bg-red-100',     cardBg: 'bg-red-50',      modalType: 'deadline' },
-]
-
-const allProjects = [
-  { id: 1, name: '스마트팜 IoT 플랫폼 구축',  status: '진행중',  pm: '홍길동', progress: 68,  endDate: '2026-12-31' },
-  { id: 2, name: '환경 모니터링 시스템 개발',  status: '진행중',  pm: '김철수', progress: 12,  endDate: '2027-02-28' },
-  { id: 3, name: '데이터 분석 자동화 모듈',    status: '마감임박', pm: '이영희', progress: 91,  endDate: '2026-09-30' },
-  { id: 4, name: '바이오센서 HW 개발',         status: '진행중',  pm: '박지민', progress: 54,  endDate: '2026-11-30' },
-  { id: 5, name: '연구소 내부망 보안 강화',    status: '대기중',  pm: '최민준', progress: 0,   endDate: '2026-11-30' },
-  { id: 6, name: '2025년도 스마트농업 시스템', status: '완료',    pm: '홍길동', progress: 100, endDate: '2025-12-31' },
-]
-
-const todayVacations = [
-  { name: '홍길동', type: '연차', period: '2026-09-16',              status: '승인' },
-  { name: '김민서', type: '반차', period: '2026-09-17',              status: '승인' },
-  { name: '이영희', type: '연차', period: '2026-09-25 ~ 2026-09-26', status: '대기' },
-]
-
-const upcomingSchedules = [
-  { date: '09-17', day: '수', title: '스마트팜 IoT 중간보고',    project: '스마트팜 IoT 플랫폼', type: 'deadline', urgent: true },
-  { date: '09-18', day: '목', title: '환경 모니터링 킥오프 미팅', project: '환경 모니터링 시스템', type: 'meeting',  urgent: false },
-  { date: '09-19', day: '금', title: '데이터 분석 모듈 납품',    project: '데이터 분석 자동화',  type: 'deadline', urgent: true },
-  { date: '09-22', day: '월', title: '바이오 센서 1차 검수',    project: '바이오센서 개발',     type: 'review',   urgent: false },
-  { date: '09-23', day: '화', title: '스마트팜 현장 방문',      project: '스마트팜 IoT 플랫폼', type: 'meeting',  urgent: false },
-]
-
-const recentFiles = [
-  { name: '스마트팜_중간보고서_v1.2.pdf',    project: '스마트팜 IoT 플랫폼', projectId: 1, uploader: '홍길동', date: '2026-09-16', size: '2.4MB' },
-  { name: '환경모니터링_요구사항분석서.docx', project: '환경 모니터링 시스템', projectId: 2, uploader: '김철수', date: '2026-09-15', size: '840KB' },
-  { name: '데이터분석_설계서_v2.0.xlsx',     project: '데이터 분석 자동화',  projectId: 3, uploader: '이영희', date: '2026-09-15', size: '1.1MB' },
-  { name: '바이오센서_회로도_v1.0.pdf',      project: '바이오센서 개발',     projectId: 4, uploader: '박지민', date: '2026-09-14', size: '5.2MB' },
-]
-
-const myProjects = [
-  { id: 1, name: '스마트팜 IoT 플랫폼',  progress: 68, status: '진행중' },
-  { id: 2, name: '환경 모니터링 시스템', progress: 12, status: '진행중' },
-  { id: 3, name: '데이터 분석 자동화',   progress: 91, status: '마감임박' },
-]
-
-const favorites = [
-  { id: 1, name: '스마트팜 IoT 플랫폼' },
-  { id: 3, name: '데이터 분석 자동화' },
-]
-
-const activeIssues = [
-  { id: 'ISS-001', title: '센서 데이터 동기화 지연 발생',  project: '스마트팜 IoT 플랫폼',  projectId: 1, status: '처리중' },
-  { id: 'ISS-003', title: '대시보드 모바일 레이아웃 깨짐', project: '스마트팜 IoT 플랫폼',  projectId: 1, status: '보류' },
-  { id: 'ISS-004', title: '환경센서 API 응답 지연',        project: '환경 모니터링 시스템', projectId: 2, status: '신규' },
-  { id: 'ISS-005', title: '분석 모듈 메모리 누수',         project: '데이터 분석 자동화',   projectId: 3, status: '처리중' },
+const metricCardConfig = [
+  { key: 'inProgressCount', label: '진행 중 프로젝트', sub: '이번 분기', icon: FolderKanban, color: 'text-primary-600', bg: 'bg-primary-100', cardBg: 'bg-primary-50', modalType: 'inProgress' },
+  { key: 'completedCount',  label: '완료된 프로젝트',  sub: '누적',     icon: CheckCircle2, color: 'text-blue-600',    bg: 'bg-blue-100',    cardBg: 'bg-blue-50',    modalType: 'completed' },
+  { key: 'todayVacationCount', label: '오늘 휴가 인원', sub: '',        icon: Umbrella,     color: 'text-yellow-600',  bg: 'bg-yellow-100',  cardBg: 'bg-yellow-50',  modalType: 'vacation' },
+  { key: 'upcomingDeadlineCount', label: '마감 임박 일정', sub: '이번 주 이내', icon: AlarmClock, color: 'text-red-600', bg: 'bg-red-100', cardBg: 'bg-red-50', modalType: 'deadline' },
 ]
 
 const issueStatusStyle = {
-  '처리중': { dot: 'bg-yellow-400', badge: 'bg-yellow-50 text-yellow-700' },
-  '신규':   { dot: 'bg-blue-400',   badge: 'bg-blue-50 text-blue-700' },
+  '진행중': { dot: 'bg-blue-400',   badge: 'bg-blue-50 text-blue-700' },
   '보류':   { dot: 'bg-gray-300',   badge: 'bg-gray-100 text-gray-500' },
 }
 
 const typeStyles = {
-  deadline: 'bg-red-50 text-red-600',
-  meeting:  'bg-blue-50 text-blue-600',
-  review:   'bg-yellow-50 text-yellow-600',
+  project:  'bg-primary-50 text-primary-600',
+  vacation: 'bg-yellow-50 text-yellow-600',
+  event:    'bg-blue-50 text-blue-600',
 }
-const typeLabels = { deadline: '마감', meeting: '미팅', review: '검수' }
+const typeLabels = { project: '프로젝트', vacation: '휴가', event: '일정' }
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const [activeModal, setActiveModal] = useState(null)
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getDashboard()
+      .then(setData)
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <Layout title="대시보드">
+        <div className="flex items-center justify-center py-20 text-sm text-gray-400">데이터를 불러오는 중...</div>
+      </Layout>
+    )
+  }
+
+  if (!data) {
+    return (
+      <Layout title="대시보드">
+        <div className="flex items-center justify-center py-20 text-sm text-gray-400">데이터를 불러올 수 없습니다.</div>
+      </Layout>
+    )
+  }
+
+  const upcomingSchedules = data.upcomingSchedules || []
+  const myProjects = data.myProjects || []
+  const activeIssues = data.activeIssues || []
+  const recentFiles = data.recentFiles || []
+  const todayVacations = data.todayVacations || []
 
   return (
     <Layout title="대시보드">
       {/* Metric Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        {metricCards.map((card) => {
+        {metricCardConfig.map((card) => {
           const Icon = card.icon
+          const value = data[card.key] ?? 0
           return (
             <div
               key={card.label}
@@ -93,7 +77,7 @@ export default function Dashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">{card.label}</p>
-                  <p className={`text-3xl font-semibold leading-none ${card.color}`}>{card.value}</p>
+                  <p className={`text-3xl font-semibold leading-none ${card.color}`}>{value}</p>
                   <p className="text-xs text-gray-400 mt-1.5">{card.sub}</p>
                 </div>
                 <div className={`w-9 h-9 ${card.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
@@ -107,45 +91,44 @@ export default function Dashboard() {
 
       {/* Main grid */}
       <div className="grid grid-cols-4 gap-4">
-
         {/* Upcoming Schedules */}
         <div className="col-span-2 card p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-900">다가오는 일정</h3>
-            <button
-              onClick={() => navigate('/calendar')}
-              className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors"
-            >
+            <button onClick={() => navigate('/calendar')} className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors">
               전체 보기 <ArrowRight style={{ width: 13, height: 13 }} />
             </button>
           </div>
           <div className="space-y-2.5">
-            {upcomingSchedules.map((s, i) => (
-              <div
-                key={i}
-                onClick={() => navigate('/calendar')}
-                className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50/60 -mx-2 px-2 rounded-lg transition-colors group"
-              >
-                <div className="w-10 flex-shrink-0 text-center">
-                  <p className="text-xs text-gray-400 leading-none">{s.date.split('-')[0]}월</p>
-                  <p className="text-base font-semibold text-gray-900 leading-tight">{s.date.split('-')[1]}</p>
-                  <p className="text-xs text-gray-400 leading-none">{s.day}</p>
-                </div>
-                <div className="w-px h-8 bg-gray-100 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm text-gray-800 font-medium truncate group-hover:text-primary-600 transition-colors">{s.title}</p>
-                    {s.urgent && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-50 text-red-600 flex-shrink-0">긴급</span>
-                    )}
+            {upcomingSchedules.length === 0 && <p className="text-xs text-gray-400 py-4 text-center">예정된 일정이 없습니다</p>}
+            {upcomingSchedules.slice(0, 5).map((s, i) => {
+              const dateObj = (s.startDate || s.date) ? new Date((s.startDate || s.date) + 'T00:00:00') : null
+              const month = dateObj ? String(dateObj.getMonth() + 1).padStart(2, '0') : ''
+              const day = dateObj ? String(dateObj.getDate()).padStart(2, '0') : ''
+              const dayNames = ['일','월','화','수','목','금','토']
+              const dayOfWeek = dateObj ? dayNames[dateObj.getDay()] : ''
+              return (
+                <div
+                  key={i}
+                  onClick={() => navigate('/calendar')}
+                  className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50/60 -mx-2 px-2 rounded-lg transition-colors group"
+                >
+                  <div className="w-10 flex-shrink-0 text-center">
+                    <p className="text-xs text-gray-400 leading-none">{month}월</p>
+                    <p className="text-base font-semibold text-gray-900 leading-tight">{day}</p>
+                    <p className="text-xs text-gray-400 leading-none">{dayOfWeek}</p>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5 truncate">{s.project}</p>
+                  <div className="w-px h-8 bg-gray-100 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-800 font-medium truncate group-hover:text-primary-600 transition-colors">{s.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{s.project || ''}</p>
+                  </div>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium flex-shrink-0 ${typeStyles[s.eventType] || 'bg-gray-50 text-gray-600'}`}>
+                    {typeLabels[s.eventType] || s.eventType}
+                  </span>
                 </div>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium flex-shrink-0 ${typeStyles[s.type]}`}>
-                  {typeLabels[s.type]}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
@@ -153,49 +136,21 @@ export default function Dashboard() {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-900">내 프로젝트</h3>
-            <button
-              onClick={() => navigate('/projects')}
-              className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors"
-            >
+            <button onClick={() => navigate('/projects')} className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors">
               전체 <ArrowRight style={{ width: 13, height: 13 }} />
             </button>
           </div>
           <div className="space-y-4">
-            {myProjects.map((p) => (
-              <div
-                key={p.id}
-                onClick={() => navigate(`/projects/${p.id}`)}
-                className="group cursor-pointer"
-              >
+            {myProjects.length === 0 && <p className="text-xs text-gray-400 py-4 text-center">참여 중인 프로젝트가 없습니다</p>}
+            {myProjects.slice(0, 3).map((p) => (
+              <div key={p.id} onClick={() => navigate(`/projects/${p.id}`)} className="group cursor-pointer">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="text-sm text-gray-800 font-medium truncate max-w-[160px] group-hover:text-primary-600 transition-colors">{p.name}</p>
                   <span className={`text-xs font-medium flex-shrink-0 ${p.status === '마감임박' ? 'text-red-500' : 'text-primary-600'}`}>
-                    {p.progress}%
+                    {p.status}
                   </span>
                 </div>
-                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${p.status === '마감임박' ? 'bg-red-400' : 'bg-primary-500'}`}
-                    style={{ width: `${p.progress}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-400 mt-1">{p.status}</p>
               </div>
-            ))}
-          </div>
-
-          {/* Favorites */}
-          <div className="mt-5 pt-4 border-t border-gray-100">
-            <p className="text-xs font-medium text-gray-500 mb-2">즐겨찾기</p>
-            {favorites.map((fav) => (
-              <button
-                key={fav.id}
-                onClick={() => navigate(`/projects/${fav.id}`)}
-                className="w-full flex items-center justify-between py-1.5 text-xs text-gray-600 hover:text-primary-600 group transition-colors"
-              >
-                <span className="truncate">{fav.name}</span>
-                <ChevronRight style={{ width: 13, height: 13 }} className="flex-shrink-0 text-gray-300 group-hover:text-primary-500" />
-              </button>
             ))}
           </div>
         </div>
@@ -205,19 +160,16 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold text-gray-900">진행 중 이슈</h3>
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-50 text-red-600 text-xs font-semibold">
-                {activeIssues.filter(i => i.status !== '해결됨').length}
-              </span>
+              {activeIssues.length > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-50 text-red-600 text-xs font-semibold">
+                  {activeIssues.length}
+                </span>
+              )}
             </div>
-            <button
-              onClick={() => navigate('/projects')}
-              className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors"
-            >
-              전체 <ArrowRight style={{ width: 13, height: 13 }} />
-            </button>
           </div>
           <div className="space-y-2.5">
-            {activeIssues.map((issue) => {
+            {activeIssues.length === 0 && <p className="text-xs text-gray-400 py-4 text-center">진행 중인 이슈가 없습니다</p>}
+            {activeIssues.slice(0, 4).map((issue) => {
               const st = issueStatusStyle[issue.status] ?? issueStatusStyle['보류']
               return (
                 <div
@@ -227,10 +179,8 @@ export default function Dashboard() {
                 >
                   <AlertCircle style={{ width: 14, height: 14 }} className="mt-0.5 flex-shrink-0 text-gray-300 group-hover:text-primary-400 transition-colors" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-800 font-medium truncate group-hover:text-primary-600 transition-colors leading-tight">
-                      {issue.title}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5 truncate">{issue.project}</p>
+                    <p className="text-sm text-gray-800 font-medium truncate group-hover:text-primary-600 transition-colors leading-tight">{issue.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{issue.projectName}</p>
                   </div>
                   <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0 whitespace-nowrap ${st.badge}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
@@ -246,12 +196,6 @@ export default function Dashboard() {
         <div className="col-span-4 card p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-900">최근 업로드된 산출물</h3>
-            <button
-              onClick={() => navigate('/projects')}
-              className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors"
-            >
-              전체 보기 <ArrowRight style={{ width: 13, height: 13 }} />
-            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -261,11 +205,13 @@ export default function Dashboard() {
                   <th className="text-left text-xs font-medium text-gray-400 pb-2.5 pr-4">프로젝트</th>
                   <th className="text-left text-xs font-medium text-gray-400 pb-2.5 pr-4">등록자</th>
                   <th className="text-left text-xs font-medium text-gray-400 pb-2.5 pr-4">등록일</th>
-                  <th className="text-left text-xs font-medium text-gray-400 pb-2.5">크기</th>
-                  <th className="pb-2.5"></th>
+                  <th className="text-left text-xs font-medium text-gray-400 pb-2.5">버전</th>
                 </tr>
               </thead>
               <tbody>
+                {recentFiles.length === 0 && (
+                  <tr><td colSpan={5} className="py-8 text-center text-xs text-gray-400">최근 업로드된 파일이 없습니다</td></tr>
+                )}
                 {recentFiles.map((f, i) => (
                   <tr
                     key={i}
@@ -278,20 +224,10 @@ export default function Dashboard() {
                         <span className="text-sm text-gray-800 font-medium group-hover:text-primary-600 transition-colors">{f.name}</span>
                       </div>
                     </td>
-                    <td className="py-3 pr-4">
-                      <span className="badge-green">{f.project}</span>
-                    </td>
+                    <td className="py-3 pr-4"><span className="badge-green">{f.projectName}</span></td>
                     <td className="py-3 pr-4 text-sm text-gray-600">{f.uploader}</td>
-                    <td className="py-3 pr-4 text-sm text-gray-500">{f.date}</td>
-                    <td className="py-3 text-sm text-gray-500">{f.size}</td>
-                    <td className="py-3 pl-4">
-                      <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-primary-600 transition-colors"
-                      >
-                        <Download style={{ width: 14, height: 14 }} />
-                      </button>
-                    </td>
+                    <td className="py-3 pr-4 text-sm text-gray-500">{f.createdAt}</td>
+                    <td className="py-3 text-sm text-gray-500">{f.latestVersion || '-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -304,6 +240,7 @@ export default function Dashboard() {
       {activeModal && (
         <MetricModal
           type={activeModal}
+          data={data}
           onClose={() => setActiveModal(null)}
           onNavigate={(path) => { setActiveModal(null); navigate(path) }}
         />
@@ -319,15 +256,7 @@ const projectStatusConfig = {
   '완료':    { cls: 'badge-gray',   dot: 'bg-gray-400' },
 }
 
-const deadlineList = [
-  { date: '09-17', day: '수', title: '스마트팜 IoT 중간보고', project: '스마트팜 IoT 플랫폼', urgent: true },
-  { date: '09-19', day: '금', title: '데이터 분석 모듈 납품', project: '데이터 분석 자동화',  urgent: true },
-  { date: '09-22', day: '월', title: '바이오 센서 1차 검수',  project: '바이오센서 개발',     urgent: false },
-  { date: '09-25', day: '목', title: '스마트팜 3분기 납품',   project: '스마트팜 IoT 플랫폼', urgent: false },
-  { date: '09-30', day: '화', title: '3분기 결산 보고',       project: '내부 일정',           urgent: false },
-]
-
-function MetricModal({ type, onClose, onNavigate }) {
+function MetricModal({ type, data, onClose, onNavigate }) {
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
@@ -342,115 +271,63 @@ function MetricModal({ type, onClose, onNavigate }) {
   }
   const { title, link } = modalMeta[type]
 
-  const inProgressList = allProjects.filter(p => p.status === '진행중' || p.status === '마감임박')
-  const completedList  = allProjects.filter(p => p.status === '완료')
+  const todayVacations = data.todayVacations || []
+  const upcomingSchedules = data.upcomingSchedules || []
+  const myProjects = data.myProjects || []
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 pb-[20vh]"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 pb-[20vh]" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl border border-gray-100 overflow-hidden">
-
-        {/* 헤더 */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => onNavigate(link)}
-              className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 transition-colors"
-            >
+            <button onClick={() => onNavigate(link)} className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 transition-colors">
               전체 보기 <ArrowRight style={{ width: 12, height: 12 }} />
             </button>
-            <button
-              onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
-            >
+            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
               <X style={{ width: 15, height: 15 }} />
             </button>
           </div>
         </div>
-
-        {/* 목록 */}
         <div className="max-h-[520px] overflow-y-auto divide-y divide-gray-50">
-
-          {type === 'inProgress' && inProgressList.map(p => {
-            const sc = projectStatusConfig[p.status]
+          {(type === 'inProgress' || type === 'completed') && myProjects.map(p => (
+            <div key={p.id} onClick={() => onNavigate(`/projects/${p.id}`)} className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 cursor-pointer group transition-colors">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 group-hover:text-primary-600 transition-colors truncate">{p.name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{p.status}</p>
+              </div>
+            </div>
+          ))}
+          {type === 'vacation' && todayVacations.map((v, i) => (
+            <div key={i} className="flex items-center gap-3 px-5 py-3.5">
+              <div className="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center text-xs font-semibold text-yellow-700 flex-shrink-0">{v.name[0]}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800">{v.name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{v.type} · {v.start}</p>
+              </div>
+              <span className="badge-yellow">{v.type}</span>
+            </div>
+          ))}
+          {type === 'deadline' && upcomingSchedules.map((s, i) => {
+            const dateObj = (s.startDate || s.date) ? new Date((s.startDate || s.date) + 'T00:00:00') : null
             return (
-              <div
-                key={p.id}
-                onClick={() => onNavigate(`/projects/${p.id}`)}
-                className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 cursor-pointer group transition-colors"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 group-hover:text-primary-600 transition-colors truncate">{p.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">PM: {p.pm} · {p.endDate} 마감</p>
+              <div key={i} onClick={() => onNavigate('/calendar')} className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 cursor-pointer group transition-colors">
+                <div className="w-10 flex-shrink-0 text-center">
+                  <p className="text-base font-semibold text-gray-900 leading-tight">{dateObj ? dateObj.getDate() : ''}</p>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-xs font-medium text-primary-600">{p.progress}%</span>
-                  <span className={sc.cls}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${sc.dot} mr-1`} />
-                    {p.status}
-                  </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 group-hover:text-primary-600 transition-colors truncate">{s.title}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 truncate">{s.project || ''}</p>
                 </div>
               </div>
             )
           })}
-
-          {type === 'completed' && completedList.map(p => (
-            <div
-              key={p.id}
-              onClick={() => onNavigate(`/projects/${p.id}`)}
-              className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 cursor-pointer group transition-colors"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 group-hover:text-primary-600 transition-colors truncate">{p.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">PM: {p.pm} · {p.endDate} 완료</p>
-              </div>
-              <span className="badge-gray flex-shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1" />
-                완료
-              </span>
-            </div>
-          ))}
-
-          {type === 'vacation' && todayVacations.map((v, i) => (
-            <div key={i} className="flex items-center gap-3 px-5 py-3.5">
-              <div className="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center text-xs font-semibold text-yellow-700 flex-shrink-0">
-                {v.name[0]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800">{v.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{v.type} · {v.period}</p>
-              </div>
-              <span className={v.status === '승인' ? 'badge-green' : 'badge-yellow'}>
-                {v.status}
-              </span>
-            </div>
-          ))}
-
-          {type === 'deadline' && deadlineList.map((s, i) => (
-            <div
-              key={i}
-              onClick={() => onNavigate('/calendar')}
-              className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 cursor-pointer group transition-colors"
-            >
-              <div className="w-10 flex-shrink-0 text-center">
-                <p className="text-xs text-gray-400 leading-none">{s.date.split('-')[0]}월</p>
-                <p className="text-base font-semibold text-gray-900 leading-tight">{s.date.split('-')[1]}</p>
-                <p className="text-xs text-gray-400 leading-none">{s.day}</p>
-              </div>
-              <div className="w-px h-8 bg-gray-100 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-medium text-gray-800 group-hover:text-primary-600 transition-colors truncate">{s.title}</p>
-                  {s.urgent && <span className="text-xs font-medium bg-red-50 text-red-600 px-1.5 py-0.5 rounded flex-shrink-0">긴급</span>}
-                </div>
-                <p className="text-xs text-gray-400 mt-0.5 truncate">{s.project}</p>
-              </div>
-            </div>
-          ))}
-
+          {((type === 'inProgress' && myProjects.length === 0) ||
+            (type === 'completed' && myProjects.length === 0) ||
+            (type === 'vacation' && todayVacations.length === 0) ||
+            (type === 'deadline' && upcomingSchedules.length === 0)) && (
+            <div className="px-5 py-8 text-center text-xs text-gray-400">데이터가 없습니다</div>
+          )}
         </div>
       </div>
     </div>

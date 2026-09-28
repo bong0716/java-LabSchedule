@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { X, AlertCircle } from 'lucide-react'
 
-const STAFF = ['홍길동', '김철수', '이영희', '박지민', '최민준', '김민서']
-
-export default function IssueCreateModal({ onClose, onSubmit, nextId }) {
+export default function IssueCreateModal({ onClose, onSubmit, members = [] }) {
   const today = new Date().toISOString().slice(0, 10)
 
   const [form, setForm] = useState({
@@ -30,15 +28,12 @@ export default function IssueCreateModal({ onClose, onSubmit, nextId }) {
     if (Object.keys(errs).length) { setErrors(errs); return }
 
     onSubmit?.({
-      id:          nextId,
       title:       form.title.trim(),
-      status:      '신규',
-      assignee:    form.assignee || '—',
-      reporter:    '김연구',
+      status:      '진행중',
+      assignee:    form.assignee || null,
       openedDate:  form.openedDate,
-      dueDate:     form.dueDate || '—',
+      dueDate:     form.dueDate || null,
       description: form.description.trim(),
-      responses: [],
     })
     onClose()
   }
@@ -64,7 +59,7 @@ export default function IssueCreateModal({ onClose, onSubmit, nextId }) {
             <div>
               <h2 className="text-sm font-semibold text-gray-900">이슈 등록</h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                {nextId} · 등록 시 상태는 <span className="text-blue-500 font-medium">신규</span>로 설정됩니다
+                등록 시 상태는 <span className="text-blue-500 font-medium">진행중</span>으로 설정됩니다
               </p>
             </div>
           </div>
@@ -104,7 +99,7 @@ export default function IssueCreateModal({ onClose, onSubmit, nextId }) {
                 className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all text-gray-700"
               >
                 <option value="">담당자 선택</option>
-                {STAFF.map(s => <option key={s}>{s}</option>)}
+                {members.map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
 

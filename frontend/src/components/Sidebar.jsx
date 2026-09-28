@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import {
   LayoutDashboard,
   CalendarDays,
@@ -8,15 +9,24 @@ import {
   FlaskConical,
 } from 'lucide-react'
 
-const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: '대시보드' },
-  { to: '/calendar',  icon: CalendarDays,    label: '통합 캘린더' },
-  { to: '/projects',  icon: FolderKanban,    label: '프로젝트' },
-  { to: '/staff',     icon: Users,           label: '직원 관리' },
-]
-
 export default function Sidebar() {
   const navigate = useNavigate()
+  const { user, logout, isAdmin } = useAuth()
+
+  const navItems = [
+    { to: '/dashboard', icon: LayoutDashboard, label: '대시보드' },
+    { to: '/calendar',  icon: CalendarDays,    label: '통합 캘린더' },
+    { to: '/projects',  icon: FolderKanban,    label: '프로젝트' },
+    { to: '/staff', icon: Users, label: '직원 관리' },
+  ]
+
+  const displayName = user?.staffName || user?.username || '사용자'
+  const initial = displayName[0] || '?'
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
 
   return (
     <aside
@@ -95,17 +105,17 @@ export default function Sidebar() {
             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
             style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
           >
-            김
+            {initial}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate leading-tight">김연구</p>
+            <p className="text-sm font-medium text-white truncate leading-tight">{displayName}</p>
             <p className="text-xs truncate leading-tight" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              책임연구원
+              {user?.role === 'ADMIN' ? '관리자' : '사용자'}
             </p>
           </div>
         </div>
         <button
-          onClick={() => navigate('/')}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150"
           style={{ color: 'rgba(255,255,255,0.5)' }}
           onMouseEnter={e => {

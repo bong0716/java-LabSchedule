@@ -1,15 +1,36 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { FlaskConical, Eye, EyeOff } from 'lucide-react'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState({ id: '', password: '' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [firstLoginMsg, setFirstLoginMsg] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    navigate('/dashboard')
+    setError('')
+    setFirstLoginMsg('')
+    setLoading(true)
+
+    try {
+      const data = await login(form.id, form.password)
+      if (data.isFirstLogin) {
+        setFirstLoginMsg('비밀번호가 설정되었습니다. 환영합니다!')
+        setTimeout(() => navigate('/dashboard'), 1500)
+      } else {
+        navigate('/dashboard')
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || '로그인에 실패했습니다.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -27,6 +48,18 @@ export default function Login() {
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           <h2 className="text-base font-semibold text-gray-900 mb-6">로그인</h2>
+
+          {error && (
+            <div className="mb-4 px-3 py-2.5 bg-red-50 border border-red-100 rounded-lg text-xs text-red-600">
+              {error}
+            </div>
+          )}
+
+          {firstLoginMsg && (
+            <div className="mb-4 px-3 py-2.5 bg-primary-50 border border-primary-100 rounded-lg text-xs text-primary-700">
+              {firstLoginMsg}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -65,9 +98,10 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 text-sm mt-2 shadow-sm shadow-primary-600/20"
+              disabled={loading}
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 text-sm mt-2 shadow-sm shadow-primary-600/20 disabled:opacity-50"
             >
-              로그인
+              {loading ? '로그인 중...' : '로그인'}
             </button>
           </form>
 

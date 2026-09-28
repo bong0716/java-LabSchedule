@@ -1,83 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import ProjectCreateModal from '../components/ProjectCreateModal'
+import { getProjects, createProject as apiCreateProject } from '../api/projects'
+import { getStaffList } from '../api/staff'
 import { Search, Plus, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react'
-
-const projects = [
-  {
-    id: 1,
-    name: '스마트팜 IoT 플랫폼 구축',
-    code: 'SF-2026-01',
-    pm: '홍길동',
-    team: ['홍길동', '김철수', '이영희', '박지민'],
-    status: '진행중',
-    startDate: '2026-03-01',
-    endDate: '2026-12-31',
-    progress: 68,
-    category: '시스템 개발',
-  },
-  {
-    id: 2,
-    name: '환경 모니터링 시스템 개발',
-    code: 'EM-2026-02',
-    pm: '김철수',
-    team: ['김철수', '이영희'],
-    status: '진행중',
-    startDate: '2026-09-01',
-    endDate: '2027-02-28',
-    progress: 12,
-    category: '시스템 개발',
-  },
-  {
-    id: 3,
-    name: '데이터 분석 자동화 모듈',
-    code: 'DA-2026-03',
-    pm: '이영희',
-    team: ['이영희', '최민준'],
-    status: '마감임박',
-    startDate: '2026-06-01',
-    endDate: '2026-09-30',
-    progress: 91,
-    category: '소프트웨어',
-  },
-  {
-    id: 4,
-    name: '바이오센서 HW 개발',
-    code: 'BS-2026-04',
-    pm: '박지민',
-    team: ['박지민', '홍길동', '김민서'],
-    status: '진행중',
-    startDate: '2026-05-01',
-    endDate: '2026-11-30',
-    progress: 54,
-    category: 'HW 개발',
-  },
-  {
-    id: 5,
-    name: '연구소 내부망 보안 강화',
-    code: 'SEC-2026-05',
-    pm: '최민준',
-    team: ['최민준'],
-    status: '대기중',
-    startDate: '2026-10-01',
-    endDate: '2026-11-30',
-    progress: 0,
-    category: '인프라',
-  },
-  {
-    id: 6,
-    name: '2025년도 스마트농업 시스템',
-    code: 'SA-2025-12',
-    pm: '홍길동',
-    team: ['홍길동', '김철수'],
-    status: '완료',
-    startDate: '2025-03-01',
-    endDate: '2025-12-31',
-    progress: 100,
-    category: '시스템 개발',
-  },
-]
 
 const statusConfig = {
   '진행중':  { cls: 'badge-green',  dot: 'bg-primary-500' },
@@ -92,8 +19,24 @@ export default function Projects() {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') ?? '전체')
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [sortField, setSortField] = useState(null)       // 'name' | 'startDate' | null
-  const [sortDirection, setSortDirection] = useState('asc') // 'asc' | 'desc'
+  const [sortField, setSortField] = useState(null)
+  const [sortDirection, setSortDirection] = useState('asc')
+  const [projects, setProjects] = useState([])
+  const [staffList, setStaffList] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchProjects = () => {
+    setLoading(true)
+    getProjects()
+      .then(setProjects)
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    fetchProjects()
+    getStaffList().then(setStaffList).catch(console.error)
+  }, [])
 
   const statuses = ['전체', '진행중', '마감임박', '대기중', '완료']
 
@@ -107,7 +50,7 @@ export default function Projects() {
   }
 
   const filtered = projects.filter(p => {
-    const matchSearch = p.name.includes(search) || p.code.includes(search) || p.pm.includes(search)
+    const matchSearch = p.name.includes(search) || p.code.includes(search) || (p.pm || '').includes(search)
     const matchStatus = filterStatus === '전체' || p.status === filterStatus
     return matchSearch && matchStatus
   })
@@ -116,53 +59,60 @@ export default function Projects() {
     if (!sortField) return 0
     const dir = sortDirection === 'asc' ? 1 : -1
     if (sortField === 'name') return a.name.localeCompare(b.name) * dir
-    if (sortField === 'startDate') return a.startDate.localeCompare(b.startDate) * dir
+    if (sortField === 'startDate') return (a.startDate || '').localeCompare(b.startDate || '') * dir
     return 0
   })
 
+  const handleCreateProject = async (data) => {
+    try {
+      const pmStaff = staffList.find(s => s.name === data.pm)
+      const teamIds = data.team
+        .map(name => staffList.find(s => s.name === name))
+        .filter(Boolean)
+        .map(s => s.id)
+
+      await apiCreateProject({
+        name: data.name,
+        code: data.code,
+        description: data.description,
+        status: data.status,
+        category: data.category,
+        pmId: pmStaff?.id || null,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        teamMemberIds: teamIds,
+      })
+      fetchProjects()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   return (
     <Layout title="프로젝트">
-      {/* Top bar */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          {/* Status filter tabs */}
           <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
             {statuses.map(s => (
-              <button
-                key={s}
-                onClick={() => setFilterStatus(s)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  filterStatus === s
-                    ? 'bg-primary-600 text-white shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
+              <button key={s} onClick={() => setFilterStatus(s)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filterStatus === s ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                 {s}
               </button>
             ))}
           </div>
         </div>
-
         <div className="flex items-center gap-2">
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style={{ width: 14, height: 14 }} />
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="프로젝트명, PM 검색"
-              className="pl-8 pr-4 py-1.5 text-sm bg-white border border-gray-200 rounded-lg w-52 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all placeholder-gray-400"
-            />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="프로젝트명, PM 검색"
+              className="pl-8 pr-4 py-1.5 text-sm bg-white border border-gray-200 rounded-lg w-52 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all placeholder-gray-400" />
           </div>
           <button onClick={() => setShowCreateModal(true)} className="btn-primary flex items-center gap-1.5">
-            <Plus style={{ width: 14, height: 14 }} />
-            새 프로젝트
+            <Plus style={{ width: 14, height: 14 }} /> 새 프로젝트
           </button>
         </div>
       </div>
 
-      {/* Summary stats */}
       <div className="grid grid-cols-4 gap-3 mb-5">
         {[
           { label: '전체', count: projects.length, color: 'text-gray-900' },
@@ -177,116 +127,77 @@ export default function Projects() {
         ))}
       </div>
 
-      {/* Project list */}
       <div className="card overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/50">
-              <th className="text-left text-xs font-medium text-gray-400 px-5 py-3">
-                <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:text-gray-600 transition-colors">
-                  프로젝트
-                  {sortField === 'name' ? (
-                    sortDirection === 'asc'
-                      ? <ChevronUp style={{ width: 12, height: 12 }} />
-                      : <ChevronDown style={{ width: 12, height: 12 }} />
-                  ) : (
-                    <ChevronDown style={{ width: 12, height: 12 }} className="opacity-30" />
-                  )}
-                </button>
-              </th>
-              <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">상태</th>
-              <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">PM</th>
-              <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">팀원</th>
-              <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">
-                <button onClick={() => toggleSort('startDate')} className="flex items-center gap-1 hover:text-gray-600 transition-colors">
-                  기간
-                  {sortField === 'startDate' ? (
-                    sortDirection === 'asc'
-                      ? <ChevronUp style={{ width: 12, height: 12 }} />
-                      : <ChevronDown style={{ width: 12, height: 12 }} />
-                  ) : (
-                    <ChevronDown style={{ width: 12, height: 12 }} className="opacity-30" />
-                  )}
-                </button>
-              </th>
-              <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">진행률</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((p) => {
-              const sc = statusConfig[p.status]
-              return (
-                <tr
-                  key={p.id}
-                  onClick={() => navigate(`/projects/${p.id}`)}
-                  className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 cursor-pointer transition-colors group"
-                >
-                  <td className="px-5 py-4">
-                    <p className="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors">{p.name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{p.code} · {p.category}</p>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className={sc.cls}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${sc.dot} mr-1.5`} />
-                      {p.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-700">{p.pm}</td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-1">
-                      <div className="flex -space-x-1.5">
-                        {p.team.slice(0, 3).map((m, i) => (
-                          <div
-                            key={i}
-                            className="w-6 h-6 rounded-full bg-primary-100 border-2 border-white flex items-center justify-center text-xs font-medium text-primary-700"
-                          >
-                            {m[0]}
-                          </div>
-                        ))}
-                      </div>
-                      {p.team.length > 3 && (
-                        <span className="text-xs text-gray-400 ml-1">+{p.team.length - 3}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-xs text-gray-500">
-                    <p>{p.startDate}</p>
-                    <p className="text-gray-400">~ {p.endDate}</p>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden w-20">
-                        <div
-                          className={`h-full rounded-full ${
-                            p.status === '완료' ? 'bg-gray-400' :
-                            p.status === '마감임박' ? 'bg-red-400' : 'bg-primary-500'
-                          }`}
-                          style={{ width: `${p.progress}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500 w-8 text-right">{p.progress}%</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <ChevronRight style={{ width: 16, height: 16 }} className="text-gray-300 group-hover:text-primary-500 transition-colors" />
-                  </td>
+        {loading ? (
+          <div className="py-16 text-center text-sm text-gray-400">로딩 중...</div>
+        ) : (
+          <>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <th className="text-left text-xs font-medium text-gray-400 px-5 py-3">
+                    <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:text-gray-600 transition-colors">
+                      프로젝트
+                      {sortField === 'name' ? (sortDirection === 'asc' ? <ChevronUp style={{ width: 12, height: 12 }} /> : <ChevronDown style={{ width: 12, height: 12 }} />) : <ChevronDown style={{ width: 12, height: 12 }} className="opacity-30" />}
+                    </button>
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">상태</th>
+                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">PM</th>
+                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">팀원</th>
+                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">
+                    <button onClick={() => toggleSort('startDate')} className="flex items-center gap-1 hover:text-gray-600 transition-colors">
+                      기간
+                      {sortField === 'startDate' ? (sortDirection === 'asc' ? <ChevronUp style={{ width: 12, height: 12 }} /> : <ChevronDown style={{ width: 12, height: 12 }} />) : <ChevronDown style={{ width: 12, height: 12 }} className="opacity-30" />}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3"></th>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        {sorted.length === 0 && (
-          <div className="py-16 text-center text-sm text-gray-400">검색 결과가 없습니다</div>
+              </thead>
+              <tbody>
+                {sorted.map((p) => {
+                  const sc = statusConfig[p.status] || statusConfig['대기중']
+                  return (
+                    <tr key={p.id} onClick={() => navigate(`/projects/${p.id}`)}
+                      className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 cursor-pointer transition-colors group">
+                      <td className="px-5 py-4">
+                        <p className="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors">{p.name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{p.code} · {p.category}</p>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className={sc.cls}><span className={`w-1.5 h-1.5 rounded-full ${sc.dot} mr-1.5`} />{p.status}</span>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-700">{p.pm}</td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-1">
+                          <div className="flex -space-x-1.5">
+                            {(p.team || []).slice(0, 3).map((m, i) => (
+                              <div key={i} className="w-6 h-6 rounded-full bg-primary-100 border-2 border-white flex items-center justify-center text-xs font-medium text-primary-700">{m[0]}</div>
+                            ))}
+                          </div>
+                          {(p.team || []).length > 3 && <span className="text-xs text-gray-400 ml-1">+{p.team.length - 3}</span>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-xs text-gray-500">
+                        <p>{p.startDate}</p>
+                        <p className="text-gray-400">~ {p.endDate}</p>
+                      </td>
+                      <td className="px-4 py-4">
+                        <ChevronRight style={{ width: 16, height: 16 }} className="text-gray-300 group-hover:text-primary-500 transition-colors" />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            {sorted.length === 0 && <div className="py-16 text-center text-sm text-gray-400">검색 결과가 없습니다</div>}
+          </>
         )}
       </div>
       {showCreateModal && (
         <ProjectCreateModal
           onClose={() => setShowCreateModal(false)}
-          onSubmit={(data) => {
-            console.log('프로젝트 등록:', data)
-            // TODO: API 연동
-          }}
+          onSubmit={handleCreateProject}
+          staffList={staffList}
         />
       )}
     </Layout>

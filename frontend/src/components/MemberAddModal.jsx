@@ -1,17 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Users, UserPlus, AlertCircle } from 'lucide-react'
 
-const INTERNAL_STAFF = ['홍길동', '김철수', '이영희', '박지민', '최민준', '김민서']
-const STAFF_TEAM = {
-  '홍길동': '시스템팀',
-  '김철수': '시스템팀',
-  '이영희': '소프트웨어팀',
-  '박지민': 'HW팀',
-  '최민준': '소프트웨어팀',
-  '김민서': 'HW팀',
-}
-
-export default function MemberAddModal({ onClose, onSubmit, existingNames = [] }) {
+export default function MemberAddModal({ onClose, onSubmit, existingNames = [], staffList = [] }) {
   const [type, setType] = useState('internal') // 'internal' | 'freelancer'
   const [form, setForm] = useState({
     staffSelect: '',
@@ -64,11 +54,12 @@ export default function MemberAddModal({ onClose, onSubmit, existingNames = [] }
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
 
+    const selectedStaff = staffList.find(s => s.name === form.staffSelect)
     const member = type === 'internal'
       ? {
           name:         form.staffSelect,
           role:         form.role,
-          team:         STAFF_TEAM[form.staffSelect] || '',
+          team:         selectedStaff?.team || '',
           mm:           Number(form.mm),
           joined:       form.joined,
           isFreelancer: false,
@@ -166,9 +157,9 @@ export default function MemberAddModal({ onClose, onSubmit, existingNames = [] }
                   className={selectCls(errors.staffSelect)}
                 >
                   <option value="">직원을 선택하세요</option>
-                  {INTERNAL_STAFF.map(s => (
-                    <option key={s} value={s} disabled={existingNames.includes(s)}>
-                      {s}{existingNames.includes(s) ? ' (참여 중)' : ''} — {STAFF_TEAM[s]}
+                  {staffList.map(s => (
+                    <option key={s.name} value={s.name} disabled={existingNames.includes(s.name)}>
+                      {s.name}{existingNames.includes(s.name) ? ' (참여 중)' : ''} — {s.team || ''}
                     </option>
                   ))}
                 </select>

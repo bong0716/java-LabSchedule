@@ -1,32 +1,39 @@
 import { useState } from 'react'
 import { X, FolderKanban, AlertCircle, ChevronDown } from 'lucide-react'
 
-const CATEGORIES = ['시스템 개발', '소프트웨어', 'HW 개발', '인프라', '연구', '기타']
+const CATEGORIES = ['시스템 개발', '소프트웨어', '이전', '인프라', '연구', '기타']
 const STATUSES   = ['진행중', '대기중']
 
-const STAFF = [
-  { name: '홍길동', team: '시스템팀',      position: '책임연구원' },
-  { name: '김철수', team: '시스템팀',      position: '선임연구원' },
-  { name: '이영희', team: '소프트웨어팀',   position: '선임연구원' },
-  { name: '박지민', team: 'HW팀',          position: '연구원' },
-  { name: '최민준', team: '소프트웨어팀',   position: '연구원' },
-  { name: '김민서', team: 'HW팀',          position: '연구원' },
-]
 
-// 프로젝트 코드 자동 제안: 첫 글자 이니셜 조합 + 년도 + 순번
+// 한국어 초성 추출
+const CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ']
+const CHO_ROMAN = ['G','GG','N','D','DD','R','M','B','BB','S','SS','O','J','JJ','CH','K','T','P','H']
+
+function getInitial(ch) {
+  const code = ch.charCodeAt(0)
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    const idx = Math.floor((code - 0xAC00) / 588)
+    return CHO_ROMAN[idx]
+  }
+  if (/[a-zA-Z]/.test(ch)) return ch.toUpperCase()
+  return ''
+}
+
+// 프로젝트 코드 자동 제안: 각 단어 초성(로마자) + 년도 + 순번
 function suggestCode(name) {
   if (!name.trim()) return ''
   const words = name.trim().split(/[\s_\-]+/)
   const initials = words
-    .map(w => w[0]?.toUpperCase() ?? '')
+    .map(w => getInitial(w[0] || ''))
     .filter(Boolean)
-    .slice(0, 3)
+    .slice(0, 4)
     .join('')
   const year = new Date().getFullYear()
   return `${initials}-${year}-`
 }
 
-export default function ProjectCreateModal({ onClose, onSubmit }) {
+export default function ProjectCreateModal({ onClose, onSubmit, staffList = [] }) {
+  const STAFF = staffList.map(s => ({ name: s.name, team: s.team || '', position: s.position || '' }))
   const [form, setForm] = useState({
     name:        '',
     code:        '',
@@ -91,7 +98,7 @@ export default function ProjectCreateModal({ onClose, onSubmit }) {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onSubmit?.({ ...form, progress: 0 })
+    onSubmit?.({ ...form })
     onClose()
   }
 

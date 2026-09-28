@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, Plus, Trash2, AlertCircle, ClipboardList } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 // 기간 자동 계산 헬퍼
 function getWeekRange(dateStr) {
@@ -33,6 +34,8 @@ function buildTitle(type, start, end) {
 }
 
 export default function ReportWriteModal({ onClose, onSubmit, existingIssues = [], onNewIssues }) {
+  const { user } = useAuth()
+  const authorName = user?.staffName || '알 수 없음'
   const today = new Date().toISOString().slice(0, 10)
   const initWeek = getWeekRange(today)
 
@@ -42,7 +45,6 @@ export default function ReportWriteModal({ onClose, onSubmit, existingIssues = [
     title:     buildTitle('주간', initWeek.start, initWeek.end),
     periodStart: initWeek.start,
     periodEnd:   initWeek.end,
-    progress:  '',
     thisWeek:  [''],
     nextWeek:  [''],
     issueItems: [{ mode: 'select', issueId: '', text: '' }],
@@ -101,9 +103,6 @@ export default function ReportWriteModal({ onClose, onSubmit, existingIssues = [
     const errs = {}
     if (!form.title.trim())            errs.title    = '제목을 입력해주세요.'
     if (!form.periodStart)             errs.period   = '기간을 입력해주세요.'
-    if (form.progress === '' || isNaN(Number(form.progress)) ||
-        Number(form.progress) < 0 || Number(form.progress) > 100)
-                                       errs.progress = '0~100 사이의 숫자를 입력해주세요.'
     if (form.thisWeek.every(s => !s.trim()))
                                        errs.thisWeek = '진행사항을 하나 이상 입력해주세요.'
     if (form.nextWeek.every(s => !s.trim()))
@@ -129,13 +128,13 @@ export default function ReportWriteModal({ onClose, onSubmit, existingIssues = [
           id: `ISS-${String(existingIssues.length + newIssuesToAdd.length + 1).padStart(3, '0')}`,
           title: item.text.trim(),
           category: '기타',
-          status: '신규',
+          status: '진행중',
           assignee: '—',
-          reporter: '김연구',
+          reporter: authorName,
           openedDate: today,
           dueDate: '—',
           description: item.text.trim(),
-          responses: [{ date: today, author: '김연구', action: '이슈 등록', content: '보고서 작성 중 이슈 등록.' }],
+          responses: [{ date: today, author: authorName, action: '이슈 등록', content: '보고서 작성 중 이슈 등록.' }],
         })
       }
     })
@@ -146,11 +145,10 @@ export default function ReportWriteModal({ onClose, onSubmit, existingIssues = [
       title:    form.title.trim(),
       period:   `${form.periodStart} ~ ${form.periodEnd}`,
       date:     today,
-      progress: Number(form.progress),
       thisWeek: form.thisWeek.filter(s => s.trim()),
       nextWeek: form.nextWeek.filter(s => s.trim()),
       issues:   issueTexts.length > 0 ? issueTexts.join('\n') : '특이사항 없음.',
-      author:   '김연구',
+      author:   authorName,
     })
     onClose()
   }
@@ -255,35 +253,6 @@ export default function ReportWriteModal({ onClose, onSubmit, existingIssues = [
                 {errors.title && <FieldError msg={errors.title} />}
               </div>
             </div>
-
-            {/* 진행률 */}
-            <div className="flex items-center gap-4">
-              <label className="text-xs font-medium text-gray-600 w-20 flex-shrink-0">
-                진행률 <span className="text-red-400">*</span>
-              </label>
-              <div className="flex-1 flex items-center gap-3">
-                <input
-                  type="number"
-                  min={0} max={100}
-                  value={form.progress}
-                  onChange={e => { setForm(prev => ({ ...prev, progress: e.target.value })); setErrors(prev => ({ ...prev, progress: null })) }}
-                  placeholder="0"
-                  className={`w-20 px-3 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all text-center ${errors.progress ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
-                />
-                <span className="text-sm text-gray-500">%</span>
-                {form.progress !== '' && !isNaN(Number(form.progress)) && (
-                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary-500 rounded-full transition-all"
-                      style={{ width: `${Math.min(100, Math.max(0, Number(form.progress)))}%` }}
-                    />
-                  </div>
-                )}
-                {errors.progress && <FieldError msg={errors.progress} />}
-              </div>
-            </div>
-
-            <div className="border-t border-gray-100" />
 
             {/* 이번 주/월 진행사항 */}
             <DynamicList
@@ -392,9 +361,9 @@ export default function ReportWriteModal({ onClose, onSubmit, existingIssues = [
               <span className="text-xs font-medium text-gray-600 w-20 flex-shrink-0">작성자</span>
               <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100">
                 <div className="w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center text-xs font-semibold text-primary-700">
-                  김
+                  {authorName[0]}
                 </div>
-                <span className="text-xs font-medium text-gray-800">김연구</span>
+                <span className="text-xs font-medium text-gray-800">{authorName}</span>
                 <span className="text-xs text-gray-400 ml-1">· {today}</span>
               </div>
             </div>
