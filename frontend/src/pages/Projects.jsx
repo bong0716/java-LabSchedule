@@ -90,30 +90,30 @@ export default function Projects() {
 
   return (
     <Layout title="프로젝트">
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-5 gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
           <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
             {statuses.map(s => (
               <button key={s} onClick={() => setFilterStatus(s)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filterStatus === s ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${filterStatus === s ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                 {s}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="relative flex-1 md:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style={{ width: 14, height: 14 }} />
             <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="프로젝트명, PM 검색"
-              className="pl-8 pr-4 py-1.5 text-sm bg-white border border-gray-200 rounded-lg w-52 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all placeholder-gray-400" />
+              className="pl-8 pr-4 py-1.5 text-sm bg-white border border-gray-200 rounded-lg w-full md:w-52 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all placeholder-gray-400" />
           </div>
-          <button onClick={() => setShowCreateModal(true)} className="btn-primary flex items-center gap-1.5">
+          <button onClick={() => setShowCreateModal(true)} className="btn-primary flex items-center gap-1.5 whitespace-nowrap">
             <Plus style={{ width: 14, height: 14 }} /> 새 프로젝트
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
           { label: '전체', count: projects.length, color: 'text-gray-900' },
           { label: '진행중', count: projects.filter(p => p.status === '진행중').length, color: 'text-primary-600' },
@@ -131,8 +131,8 @@ export default function Projects() {
         {loading ? (
           <div className="py-16 text-center text-sm text-gray-400">로딩 중...</div>
         ) : (
-          <>
-            <table className="w-full">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px]">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left text-xs font-medium text-gray-400 px-5 py-3">
@@ -190,7 +190,7 @@ export default function Projects() {
               </tbody>
             </table>
             {sorted.length === 0 && <div className="py-16 text-center text-sm text-gray-400">검색 결과가 없습니다</div>}
-          </>
+          </div>
         )}
       </div>
       {showCreateModal && (

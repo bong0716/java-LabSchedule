@@ -64,7 +64,7 @@ export default function Dashboard() {
   return (
     <Layout title="대시보드">
       {/* Metric Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
         {metricCardConfig.map((card) => {
           const Icon = card.icon
           const value = data[card.key] ?? 0
@@ -90,9 +90,9 @@ export default function Dashboard() {
       </div>
 
       {/* Main grid */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Upcoming Schedules */}
-        <div className="col-span-2 card p-5">
+        <div className="col-span-1 md:col-span-2 card p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-900">다가오는 일정</h3>
             <button onClick={() => navigate('/calendar')} className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors">
@@ -193,7 +193,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Files */}
-        <div className="col-span-4 card p-5">
+        <div className="col-span-1 md:col-span-2 lg:col-span-4 card p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-900">최근 업로드된 산출물</h3>
           </div>

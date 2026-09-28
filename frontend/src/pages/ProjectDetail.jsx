@@ -373,7 +373,7 @@ export default function ProjectDetail() {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">프로젝트명</label>
                 <input type="text" value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))}
@@ -390,7 +390,7 @@ export default function ProjectDetail() {
               <textarea value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} rows={2}
                 className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 resize-none" />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">상태</label>
                 <select value={editForm.status} onChange={e => setEditForm(p => ({ ...p, status: e.target.value }))}
@@ -414,7 +414,7 @@ export default function ProjectDetail() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">시작일</label>
                 <input type="date" value={editForm.startDate || ''} onChange={e => setEditForm(p => ({ ...p, startDate: e.target.value }))}
@@ -442,7 +442,7 @@ export default function ProjectDetail() {
                 <Pencil style={{ width: 13, height: 13 }} /> 수정
               </button>
             </div>
-            <div className="flex items-center gap-6 mt-4 pt-4 border-t border-gray-100">
+            <div className="flex flex-wrap items-center gap-4 md:gap-6 mt-4 pt-4 border-t border-gray-100">
               <div className="flex items-center gap-1.5 text-sm text-gray-600">
                 <User style={{ width: 14, height: 14 }} className="text-gray-400" />
                 <span className="text-gray-400 text-xs">PM</span>
@@ -628,7 +628,7 @@ export default function ProjectDetail() {
               <Plus style={{ width: 14, height: 14 }} /> 보고서 작성
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="col-span-1 space-y-2">
               {filteredReports.length === 0 && <div className="card p-4 text-center text-xs text-gray-400">보고서가 없습니다</div>}
               {filteredReports.map(r => (
@@ -648,7 +648,7 @@ export default function ProjectDetail() {
                 </div>
               ))}
             </div>
-            <div className="col-span-2">
+            <div className="md:col-span-2">
               {selectedReport ? (
                 <div className="card p-5">
                   <div className="flex items-center justify-between mb-4">
@@ -774,7 +774,8 @@ export default function ProjectDetail() {
             </button>
           </div>
           <div className="card overflow-hidden">
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px]">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left text-xs font-medium text-gray-400 px-5 py-3">이름</th>
@@ -855,6 +856,7 @@ export default function ProjectDetail() {
                 })}
               </tbody>
             </table>
+            </div>
             {members.length === 0 && <div className="py-12 text-center text-xs text-gray-400">참여 인력이 없습니다</div>}
           </div>
         </div>

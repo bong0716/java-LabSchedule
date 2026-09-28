@@ -107,8 +107,8 @@ export default function Staff() {
 
   return (
     <Layout title="직원 관리">
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-5 gap-3">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <div className="flex items-center bg-white border border-gray-200 rounded-lg p-1">
             {[['card', '카드'], ['table', '테이블']].map(([v, label]) => (
               <button key={v} onClick={() => setView(v)}
@@ -117,18 +117,18 @@ export default function Staff() {
               </button>
             ))}
           </div>
-          <div className="relative">
+          <div className="relative flex-1 md:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style={{ width: 14, height: 14 }} />
             <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="이름, 팀 검색"
-              className="pl-8 pr-4 py-1.5 text-sm bg-white border border-gray-200 rounded-lg w-44 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 placeholder-gray-400" />
+              className="pl-8 pr-4 py-1.5 text-sm bg-white border border-gray-200 rounded-lg w-full md:w-44 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 placeholder-gray-400" />
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => { setEditVacation(null); setShowVacationModal(true) }} className="btn-secondary flex items-center gap-1.5">
+          <button onClick={() => { setEditVacation(null); setShowVacationModal(true) }} className="btn-secondary flex items-center gap-1.5 whitespace-nowrap">
             <Calendar style={{ width: 14, height: 14 }} /> 휴가 신청
           </button>
           {isAdmin && (
-            <button onClick={() => setShowStaffModal(true)} className="btn-primary flex items-center gap-1.5">
+            <button onClick={() => setShowStaffModal(true)} className="btn-primary flex items-center gap-1.5 whitespace-nowrap">
               <Plus style={{ width: 14, height: 14 }} /> 직원 추가
             </button>
           )}
@@ -136,7 +136,7 @@ export default function Staff() {
       </div>
 
       {view === 'card' ? (
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {filtered.map(s => (
             <div key={s.id} className="card p-5 hover:border-primary-200 hover:shadow-md transition-all group">
               <div className="flex items-start gap-3 mb-3">
@@ -168,7 +168,8 @@ export default function Staff() {
         </div>
       ) : (
         <div className="card overflow-hidden mb-6">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50">
                 <th className="text-left text-xs font-medium text-gray-400 px-5 py-3">이름</th>
@@ -202,6 +203,7 @@ export default function Staff() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

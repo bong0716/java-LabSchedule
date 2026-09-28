@@ -235,10 +235,10 @@ export default function Calendar() {
 
   return (
     <Layout title="통합 캘린더">
-      <div className="flex gap-4">
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* Main Calendar */}
         <div className="flex-1 card overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 md:px-5 py-3 md:py-4 border-b border-gray-100 gap-3">
             <div className="flex items-center gap-3">
               <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
                 <ChevronLeft style={{ width: 16, height: 16 }} className="text-gray-500" />
@@ -248,18 +248,19 @@ export default function Calendar() {
                 <ChevronRight style={{ width: 16, height: 16 }} className="text-gray-500" />
               </button>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3 flex-wrap">
               {filters.map(f => (
                 <button key={f.key} onClick={() => toggleFilter(f.key)}
-                  className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-all ${
+                  className={`flex items-center gap-1.5 text-xs px-2.5 md:px-3 py-1.5 rounded-lg border transition-all ${
                     activeFilters.includes(f.key) ? 'border-transparent bg-gray-100 text-gray-700 font-medium' : 'border-gray-200 text-gray-400 bg-white'
                   }`}>
                   <span className={`w-2 h-2 rounded-full ${activeFilters.includes(f.key) ? f.color : 'bg-gray-300'}`} />
-                  {f.label}
+                  <span className="hidden sm:inline">{f.label}</span>
+                  <span className="sm:hidden">{f.key === 'project' ? '프로젝트' : f.key === 'vacation' ? '휴가' : '내부'}</span>
                 </button>
               ))}
               <button onClick={() => openModal()} className="btn-primary flex items-center gap-1.5 ml-1">
-                <Plus style={{ width: 14, height: 14 }} /> 일정 등록
+                <Plus style={{ width: 14, height: 14 }} /> <span className="hidden sm:inline">일정 등록</span><span className="sm:hidden">등록</span>
               </button>
             </div>
           </div>
@@ -365,7 +366,7 @@ export default function Calendar() {
         </div>
 
         {/* Side Panel */}
-        <div className="w-64 flex-shrink-0 space-y-4">
+        <div className="w-full lg:w-64 flex-shrink-0 space-y-4">
           <div className="card p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-semibold text-gray-900">
